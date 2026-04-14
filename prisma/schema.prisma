@@ -1,13 +1,78 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
+}
+
+model Sessao {
+  id            Int       @id @default(autoincrement())
+  agenciaNome   String    @map("agencia_nome")
+  vendedorNome  String    @map("vendedor_nome")
+  status        String    @default("rascunho") // rascunho | completa
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  respostas     RespostaDiagnostico[]
+  dados         DadosAgencia?
+  planoAcoes    PlanoAcao[]
+
+  @@map("sessoes")
+}
+
+model RespostaDiagnostico {
+  id          Int     @id @default(autoincrement())
+  sessaoId    Int     @map("sessao_id")
+  perguntaId  Int     @map("pergunta_id")
+  resposta    Boolean
+
+  sessao      Sessao  @relation(fields: [sessaoId], references: [id], onDelete: Cascade)
+
+  @@unique([sessaoId, perguntaId])
+  @@map("respostas_diagnostico")
+}
+
+model DadosAgencia {
+  id              Int    @id @default(autoincrement())
+  sessaoId        Int    @unique @map("sessao_id")
+  vendasMes       Int    @map("vendas_mes")
+  ticketMedio     Float  @map("ticket_medio")
+  comissaoPct     Float  @map("comissao_pct")
+  atendPerdidos   Int    @map("atend_perdidos")
+  clientesAtivos  Int    @map("clientes_ativos")
+  clientesInativos Int   @map("clientes_inativos")
+  indicacoesMes   Int    @map("indicacoes_mes")
+  taxaConversao   Float  @map("taxa_conversao")
+  tempoRecompra   Int    @map("tempo_recompra") // em meses
+  cpl             Float  @default(0) // custo por lead
+  ticket2aCompra  Float  @default(0) @map("ticket_2a_compra")
+  historicoMeses  Int    @default(12) @map("historico_meses")
+
+  sessao          Sessao @relation(fields: [sessaoId], references: [id], onDelete: Cascade)
+
+  @@map("dados_agencia")
+}
+
+model PlanoAcao {
+  id          Int       @id @default(autoincrement())
+  sessaoId    Int       @map("sessao_id")
+  acaoId      Int       @map("acao_id")
+  concluida   Boolean   @default(false)
+  concluidaEm DateTime? @map("concluida_em")
+
+  sessao      Sessao    @relation(fields: [sessaoId], references: [id], onDelete: Cascade)
+
+  @@unique([sessaoId, acaoId])
+  @@map("plano_acoes")
+}
+
+model Benchmark {
+  id              Int    @id @default(autoincrement())
+  chave           String @unique
+  valorSemEntur   Float  @map("valor_sem_entur")
+  valorComEntur   Float  @map("valor_com_entur")
+  descricao       String
+
+  @@map("benchmarks")
 }
