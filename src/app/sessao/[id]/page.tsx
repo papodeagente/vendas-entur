@@ -87,8 +87,18 @@ export default function SessaoPage({
           <a href="/" className="text-slate-500 hover:text-slate-300 text-sm mb-2 inline-block">
             ← Voltar
           </a>
-          <h1 className="text-2xl font-bold text-white">{sessao.agenciaNome}</h1>
-          <p className="text-slate-400">Vendedor: {sessao.vendedorNome}</p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-white">{sessao.agenciaNome}</h1>
+              <p className="text-slate-400">Vendedor: {sessao.vendedorNome}</p>
+            </div>
+            <a
+              href={`/sessao/${sessao.id}/ao-vivo`}
+              className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold shadow-lg shadow-emerald-600/30"
+            >
+              ⚡ Abrir modo SPIN ao vivo
+            </a>
+          </div>
         </div>
 
         {/* Stepper */}

@@ -18,8 +18,51 @@ model Sessao {
   respostas     RespostaDiagnostico[]
   dados         DadosAgencia?
   planoAcoes    PlanoAcao[]
+  prospect      Prospect?
+  frases        FraseCliente[]
+  progresso     ProgressoFase[]
 
   @@map("sessoes")
+}
+
+model Prospect {
+  id            Int     @id @default(autoincrement())
+  sessaoId      Int     @unique @map("sessao_id")
+  nome          String
+  cargo         String?
+  tamanhoEquipe Int?    @map("tamanho_equipe")
+  email         String?
+  whatsapp      String?
+
+  sessao        Sessao  @relation(fields: [sessaoId], references: [id], onDelete: Cascade)
+
+  @@map("prospects")
+}
+
+model FraseCliente {
+  id        Int      @id @default(autoincrement())
+  sessaoId  Int      @map("sessao_id")
+  fase      String   // situacao | problema | implicacao | needPayoff
+  texto     String
+  perguntaId Int?    @map("pergunta_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  sessao    Sessao   @relation(fields: [sessaoId], references: [id], onDelete: Cascade)
+
+  @@map("frases_cliente")
+}
+
+model ProgressoFase {
+  id          Int       @id @default(autoincrement())
+  sessaoId    Int       @map("sessao_id")
+  fase        String    // abertura | situacao | problema | implicacao | needPayoff | fechamento
+  iniciadaEm  DateTime? @map("iniciada_em")
+  concluidaEm DateTime? @map("concluida_em")
+
+  sessao      Sessao    @relation(fields: [sessaoId], references: [id], onDelete: Cascade)
+
+  @@unique([sessaoId, fase])
+  @@map("progresso_fases")
 }
 
 model RespostaDiagnostico {
