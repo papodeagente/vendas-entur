@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Navbar } from "@/components/Navbar";
 
 interface Sessao {
   id: number;
@@ -44,6 +45,7 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+      <Navbar />
       <div className="max-w-4xl mx-auto px-6 py-12">
         <div className="mb-12 text-center">
           <h1 className="text-4xl font-bold text-white mb-2">

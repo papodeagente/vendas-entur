@@ -1,8 +1,18 @@
 import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
 async function main() {
+  // Super admin
+  const senhaBruno = await bcrypt.hash("Bruna2016*", 10);
+  await prisma.user.upsert({
+    where: { email: "bruno@entur.com.br" },
+    update: { passwordHash: senhaBruno, role: "admin", ativo: true, nome: "Bruno" },
+    create: { email: "bruno@entur.com.br", nome: "Bruno", passwordHash: senhaBruno, role: "admin", ativo: true },
+  });
+  console.log("✓ Super admin bruno@entur.com.br criado");
+
   // Benchmarks do documento
   const benchmarks = [
     {
