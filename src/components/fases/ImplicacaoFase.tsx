@@ -29,12 +29,17 @@ function preencherVariaveis(texto: string, vars: Record<string, number>) {
 
 export function ImplicacaoFase({ sessao, onConcluir, onRefresh }: Props) {
   const respostasMap: Record<number, boolean> = {};
-  sessao.respostas.forEach((r) => (respostasMap[r.perguntaId] = r.resposta));
+  const severidadeMap: Record<number, number | null> = {};
+  sessao.respostas.forEach((r) => {
+    respostasMap[r.perguntaId] = r.resposta;
+    severidadeMap[r.perguntaId] = r.severidade;
+  });
 
-  // Problemas confirmados (resposta = false)
+  // Problemas confirmados (resposta = false), ordenados por severidade (forte primeiro)
   const problemasIds = Object.keys(respostasMap)
     .filter((k) => respostasMap[Number(k)] === false)
-    .map(Number);
+    .map(Number)
+    .sort((a, b) => (severidadeMap[a] ?? 9) - (severidadeMap[b] ?? 9));
 
   const r = sessao.dados
     ? dinheiroNaMesa(respostasMap, sessao.dados)
@@ -58,7 +63,11 @@ export function ImplicacaoFase({ sessao, onConcluir, onRefresh }: Props) {
   const [fraseTexto, setFraseTexto] = useState("");
 
   const perguntaAtiva = PERGUNTAS.find((p) => p.id === perguntaAtivaId);
-  const frasesProblema = sessao.frases.filter((f) => f.fase === "problema");
+
+  // Frases filtradas: da pergunta ativa na fase problema
+  const frasesDestaPergunta = sessao.frases.filter(
+    (f) => f.fase === "problema" && f.perguntaId === perguntaAtivaId
+  );
 
   async function salvarFrase() {
     if (!fraseTexto.trim()) return;
@@ -99,16 +108,88 @@ export function ImplicacaoFase({ sessao, onConcluir, onRefresh }: Props) {
           Transição — leia em voz alta
         </p>
         <p className="text-slate-100 italic leading-relaxed">
-          &ldquo;{sessao.prospect?.nome || "Então"}, a gente mapeou {problemasIds.length} pontos hoje. Eu queria entender com
-          você o impacto disso. Posso te mostrar como eu olho pra esses números?&rdquo;
+          &ldquo;{sessao.prospect?.nome || "Então"}, a gente mapeou{" "}
+          {problemasIds.length} pontos hoje. Eu queria entender com você o
+          impacto disso. Posso te mostrar como eu olho pra esses números?&rdquo;
         </p>
       </div>
+
+      {/* Contraste ANTES vs DEPOIS */}
+      {r && (
+        <div className="grid grid-cols-2 gap-3">
+          <div className="p-4 rounded-xl bg-red-900/20 border border-red-800/40">
+            <p className="text-[10px] uppercase tracking-wider text-red-400 mb-2">
+              Cenário atual (sem processo)
+            </p>
+            <p className="text-2xl font-bold text-red-300 tabular-nums">
+              {brl(r.recuperacaoHoje + r.recorrenciaHoje + r.indicacaoHoje)}
+              <span className="text-sm font-normal text-red-400">/mês</span>
+            </p>
+            <div className="mt-2 text-xs text-red-300/70 space-y-0.5">
+              <p>Recuperação: {brl(r.recuperacaoHoje)}</p>
+              <p>Recorrência: {brl(r.recorrenciaHoje)}</p>
+              <p>Indicação: {brl(r.indicacaoHoje)}</p>
+            </div>
+          </div>
+          <div className="p-4 rounded-xl bg-emerald-900/20 border border-emerald-800/40">
+            <p className="text-[10px] uppercase tracking-wider text-emerald-400 mb-2">
+              Cenário com Entur OS
+            </p>
+            <p className="text-2xl font-bold text-emerald-300 tabular-nums">
+              {brl(
+                r.recuperacaoHoje +
+                  r.recorrenciaHoje +
+                  r.indicacaoHoje +
+                  r.totalMes
+              )}
+              <span className="text-sm font-normal text-emerald-400">/mês</span>
+            </p>
+            <div className="mt-2 text-xs text-emerald-300/70 space-y-0.5">
+              <p>
+                Recuperação: {brl(r.recuperacaoHoje + r.recuperacao)}{" "}
+                <span className="text-emerald-400">
+                  (+{brl(r.recuperacao)})
+                </span>
+              </p>
+              <p>
+                Recorrência: {brl(r.recorrenciaHoje + r.recorrencia)}{" "}
+                <span className="text-emerald-400">
+                  (+{brl(r.recorrencia)})
+                </span>
+              </p>
+              <p>
+                Indicação: {brl(r.indicacaoHoje + r.indicacao)}{" "}
+                <span className="text-emerald-400">
+                  (+{brl(r.indicacao)})
+                </span>
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delta mensal/anual */}
+      {r && (
+        <div className="p-4 rounded-xl bg-slate-900/60 border border-emerald-800/30 flex items-center justify-between">
+          <div>
+            <p className="text-[10px] uppercase tracking-wider text-slate-500">
+              Dinheiro na Mesa (delta)
+            </p>
+            <p className="text-xl font-bold text-emerald-400 tabular-nums">
+              +{brl(r.totalMes)}/mês → +{brl(r.totalAno)}/ano
+            </p>
+          </div>
+          <p className="text-xs text-slate-500 italic">
+            &ldquo;A cada dia sem processo: -{brl(r.totalMes / 30)}&rdquo;
+          </p>
+        </div>
+      )}
 
       {/* Perguntas de implicação — uma por problema */}
       <div className="p-5 rounded-xl bg-slate-900/60 border border-slate-800">
         <div className="flex items-baseline justify-between mb-3">
           <p className="text-[10px] uppercase tracking-wider text-orange-400">
-            Pergunta de Implicação — escolha o problema a amplificar
+            Pergunta de Implicação — amplifique a dor
           </p>
         </div>
 
@@ -126,7 +207,7 @@ export function ImplicacaoFase({ sessao, onConcluir, onRefresh }: Props) {
                   : "bg-slate-800 text-slate-400 hover:bg-slate-700"
               }`}
             >
-              P{pid}
+              {severidadeMap[pid] === 1 ? "🔴 " : "🟡 "}P{pid}
             </button>
           ))}
         </div>
@@ -140,19 +221,19 @@ export function ImplicacaoFase({ sessao, onConcluir, onRefresh }: Props) {
               &ldquo;{preencherVariaveis(perguntaAtiva.implicacao, vars)}&rdquo;
             </p>
 
-            {/* Frases capturadas da fase Problema — espelhar */}
-            {frasesProblema.length > 0 && (
+            {/* Frases capturadas DESTA pergunta na fase Problema */}
+            {frasesDestaPergunta.length > 0 && (
               <div className="mt-4 pt-3 border-t border-slate-800">
                 <p className="text-[10px] uppercase tracking-wider text-amber-400 mb-2">
-                  Espelhe o que ele disse
+                  Espelhe — use as palavras dele sobre P{perguntaAtivaId}
                 </p>
                 <div className="space-y-1">
-                  {frasesProblema.slice(-3).map((f) => (
+                  {frasesDestaPergunta.map((f) => (
                     <p
                       key={f.id}
                       className="text-xs text-amber-200 italic pl-3 border-l-2 border-amber-500/50"
                     >
-                      &ldquo;Você mesmo me disse que {f.texto}. E isso custa R$ {brl(vars.valorRecuperacaoMes || 0)} por mês...&rdquo;
+                      &ldquo;Você me disse: {f.texto}&rdquo;
                     </p>
                   ))}
                 </div>
@@ -169,7 +250,7 @@ export function ImplicacaoFase({ sessao, onConcluir, onRefresh }: Props) {
             {mostrarImpacto ? "Esconder" : "Mostrar impacto"} visual
           </button>
           <span className="text-xs text-slate-500">
-            Use quando sentir resistência — comparador ajuda a tornar tangível.
+            Use quando sentir resistência — comparador tangível.
           </span>
         </div>
       </div>
@@ -178,19 +259,20 @@ export function ImplicacaoFase({ sessao, onConcluir, onRefresh }: Props) {
       {mostrarImpacto && r && (
         <div className="p-5 rounded-xl bg-red-900/20 border border-red-800/40">
           <p className="text-[10px] uppercase tracking-wider text-red-400 mb-3">
-            Impacto anual — comparador
+            Impacto anual — comparador tangível
           </p>
           <p className="text-3xl font-bold text-red-300 mb-3 tabular-nums">
             {brl(r.totalAno)}
           </p>
           <div className="text-sm text-slate-300 space-y-1">
-            <p>= {Math.floor(r.totalAno / 80000)} carros populares novos, por ano</p>
+            <p>
+              = {Math.floor(r.totalAno / 80000)} carros populares novos por ano
+            </p>
             <p>= {Math.floor(r.totalAno / 15000)} viagens internacionais</p>
-            <p>= a entrada de {(r.totalAno / 100000).toFixed(1)} apartamentos</p>
+            <p>
+              = a entrada de {(r.totalAno / 100000).toFixed(1)} apartamentos
+            </p>
           </div>
-          <p className="text-xs text-red-300/70 mt-4 italic">
-            &ldquo;A cada dia sem processo, você perde {brl(r.totalMes / 30)}.&rdquo;
-          </p>
         </div>
       )}
 
@@ -204,6 +286,7 @@ export function ImplicacaoFase({ sessao, onConcluir, onRefresh }: Props) {
             type="text"
             value={fraseTexto}
             onChange={(e) => setFraseTexto(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && salvarFrase()}
             placeholder={`ex: "caramba, não tinha ideia que era tanto"`}
             className="flex-1 px-3 py-2 rounded bg-slate-800 border border-slate-700 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-orange-500"
           />

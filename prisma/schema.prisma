@@ -83,6 +83,7 @@ model RespostaDiagnostico {
   sessaoId    Int     @map("sessao_id")
   perguntaId  Int     @map("pergunta_id")
   resposta    Boolean
+  severidade  Int?    // 1 = dor forte (sem processo), 2 = dor média (processo parcial), null = resolvido
 
   sessao      Sessao  @relation(fields: [sessaoId], references: [id], onDelete: Cascade)
 

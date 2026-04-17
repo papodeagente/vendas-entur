@@ -9,7 +9,7 @@ export async function PUT(
 ) {
   const { id } = await params;
   const sessaoId = Number(id);
-  const body: { respostas: { perguntaId: number; resposta: boolean }[] } =
+  const body: { respostas: { perguntaId: number; resposta: boolean; severidade?: number | null }[] } =
     await req.json();
 
   // Upsert each answer
@@ -18,8 +18,8 @@ export async function PUT(
       where: {
         sessaoId_perguntaId: { sessaoId, perguntaId: r.perguntaId },
       },
-      update: { resposta: r.resposta },
-      create: { sessaoId, perguntaId: r.perguntaId, resposta: r.resposta },
+      update: { resposta: r.resposta, severidade: r.severidade ?? null },
+      create: { sessaoId, perguntaId: r.perguntaId, resposta: r.resposta, severidade: r.severidade ?? null },
     });
   }
 

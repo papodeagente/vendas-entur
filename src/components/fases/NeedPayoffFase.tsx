@@ -27,6 +27,18 @@ export function NeedPayoffFase({ sessao, onConcluir, onRefresh }: Props) {
 
   const perguntaAtiva = PERGUNTAS.find((p) => p.id === perguntaAtivaId);
 
+  // Frases de needPayoff para a pergunta ativa
+  const frasesDestaPergunta = sessao.frases.filter(
+    (f) => f.fase === "needPayoff" && f.perguntaId === perguntaAtivaId
+  );
+
+  // Checa se uma pergunta tem pelo menos 1 frase de needPayoff
+  function temFrasePayoff(pid: number): boolean {
+    return sessao.frases.some(
+      (f) => f.fase === "needPayoff" && f.perguntaId === pid
+    );
+  }
+
   async function salvarFrase() {
     if (!fraseTexto.trim()) return;
     await fetch(`/api/sessoes/${sessao.id}/frases`, {
@@ -43,24 +55,26 @@ export function NeedPayoffFase({ sessao, onConcluir, onRefresh }: Props) {
   }
 
   function toggleValidado(pid: number) {
+    // Só permite validar se tem pelo menos 1 frase
+    if (!temFrasePayoff(pid)) return;
     const nova = new Set(validados);
     if (nova.has(pid)) nova.delete(pid);
     else nova.add(pid);
     setValidados(nova);
   }
 
-  // Mapear pergunta → ações (via módulo Entur OS)
   const modulosValidados = new Set(
     Array.from(validados)
       .map((pid) => PERGUNTAS.find((p) => p.id === pid)?.moduloEnturOS)
       .filter(Boolean)
   );
-  const acoesRecomendadas = ACOES_PLANO.filter((a) =>
-    modulosValidados.has(a.moduloEnturOS) ||
-    Array.from(validados).some((pid) => {
-      const p = PERGUNTAS.find((pp) => pp.id === pid);
-      return p && a.preRequisito.includes(`Pergunta ${pid}`);
-    })
+  const acoesRecomendadas = ACOES_PLANO.filter(
+    (a) =>
+      modulosValidados.has(a.moduloEnturOS) ||
+      Array.from(validados).some((pid) => {
+        const p = PERGUNTAS.find((pp) => pp.id === pid);
+        return p && a.preRequisito.includes(`Pergunta ${pid}`);
+      })
   );
 
   const podeAvancar = validados.size >= 2;
@@ -73,8 +87,9 @@ export function NeedPayoffFase({ sessao, onConcluir, onRefresh }: Props) {
           Transição — leia em voz alta
         </p>
         <p className="text-slate-100 italic leading-relaxed">
-          &ldquo;Agora eu quero fazer um exercício com você, {sessao.prospect?.nome || "vamos lá"}. Imagina que a
-          gente resolveu cada um desses pontos. Me conta como isso muda a operação.&rdquo;
+          &ldquo;Agora eu quero fazer um exercício com você,{" "}
+          {sessao.prospect?.nome || "vamos lá"}. Imagina que a gente resolveu
+          cada um desses pontos. Me conta como isso muda a operação.&rdquo;
         </p>
       </div>
 
@@ -113,48 +128,77 @@ export function NeedPayoffFase({ sessao, onConcluir, onRefresh }: Props) {
             Deixe ele responder. Não fale a solução — deixe ele descrever.
           </p>
 
-          <div className="mt-4 flex items-center gap-3 pt-3 border-t border-emerald-800/30">
+          {/* Capturar frase ANTES de poder validar */}
+          <div className="mt-4 pt-3 border-t border-emerald-800/30">
+            <label className="text-[10px] uppercase tracking-wider text-slate-500 block mb-2">
+              Capture como ele descreveu a solução
+              {!temFrasePayoff(perguntaAtivaId) && (
+                <span className="text-red-400 ml-1">
+                  (obrigatório para validar payoff)
+                </span>
+              )}
+            </label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={fraseTexto}
+                onChange={(e) => setFraseTexto(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && salvarFrase()}
+                placeholder={`ex: "se eu tivesse isso, fechava o dobro"`}
+                className="flex-1 px-3 py-2 rounded bg-slate-800 border border-slate-700 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500"
+              />
+              <button
+                onClick={salvarFrase}
+                disabled={!fraseTexto.trim()}
+                className="px-3 py-2 rounded bg-emerald-700 hover:bg-emerald-600 text-sm disabled:opacity-40"
+              >
+                + Salvar
+              </button>
+            </div>
+
+            {/* Frases já capturadas */}
+            {frasesDestaPergunta.length > 0 && (
+              <div className="space-y-1 mt-2">
+                {frasesDestaPergunta.map((f) => (
+                  <p
+                    key={f.id}
+                    className="text-xs text-emerald-200 italic pl-3 border-l-2 border-emerald-500/50"
+                  >
+                    &ldquo;{f.texto}&rdquo;
+                  </p>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Botão de validação — só ativo se tem frase */}
+          <div className="mt-4 flex items-center gap-3">
             <button
               onClick={() => toggleValidado(perguntaAtivaId)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium ${
+              disabled={!temFrasePayoff(perguntaAtivaId)}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                 validados.has(perguntaAtivaId)
                   ? "bg-emerald-600 text-white"
-                  : "bg-slate-700 hover:bg-slate-600 text-slate-100"
+                  : temFrasePayoff(perguntaAtivaId)
+                  ? "bg-slate-700 hover:bg-slate-600 text-slate-100"
+                  : "bg-slate-800 text-slate-500 cursor-not-allowed opacity-50"
               }`}
             >
               {validados.has(perguntaAtivaId)
                 ? "✓ Payoff validado"
-                : "Ele validou esse payoff"}
+                : temFrasePayoff(perguntaAtivaId)
+                ? "Ele validou esse payoff"
+                : "Capture a frase primeiro"}
             </button>
             <span className="text-xs text-slate-500">
-              Módulo conectado: <strong className="text-emerald-400">{perguntaAtiva.moduloEnturOS}</strong>
+              Módulo:{" "}
+              <strong className="text-emerald-400">
+                {perguntaAtiva.moduloEnturOS}
+              </strong>
             </span>
           </div>
         </div>
       )}
-
-      {/* Capturar frase */}
-      <div className="p-4 rounded-xl bg-slate-900/40 border border-slate-800">
-        <label className="text-[10px] uppercase tracking-wider text-slate-500 block mb-2">
-          Capture como ele descreveu a solução
-        </label>
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={fraseTexto}
-            onChange={(e) => setFraseTexto(e.target.value)}
-            placeholder={`ex: "se eu tivesse isso, fechava o dobro"`}
-            className="flex-1 px-3 py-2 rounded bg-slate-800 border border-slate-700 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500"
-          />
-          <button
-            onClick={salvarFrase}
-            disabled={!fraseTexto.trim()}
-            className="px-3 py-2 rounded bg-emerald-700 hover:bg-emerald-600 text-sm disabled:opacity-40"
-          >
-            + Salvar
-          </button>
-        </div>
-      </div>
 
       {/* Ponte para a solução */}
       {validados.size >= 2 && (
@@ -163,8 +207,10 @@ export function NeedPayoffFase({ sessao, onConcluir, onRefresh }: Props) {
             Ponte para a solução — leia em voz alta
           </p>
           <p className="text-lg text-slate-100 italic leading-relaxed font-medium">
-            &ldquo;Tudo que você acabou de descrever — {Array.from(validados).length} coisas — é exatamente o que o Entur OS faz.
-            Cada um desses processos já está pronto e automatizado. Posso te mostrar como se encaixa na sua operação?&rdquo;
+            &ldquo;Tudo que você acabou de descrever —{" "}
+            {Array.from(validados).length} coisas — é exatamente o que o Entur
+            OS faz. Cada um desses processos já está pronto e automatizado.
+            Posso te mostrar como se encaixa na sua operação?&rdquo;
           </p>
 
           {acoesRecomendadas.length > 0 && (
@@ -187,7 +233,10 @@ export function NeedPayoffFase({ sessao, onConcluir, onRefresh }: Props) {
                       </span>
                     </div>
                     <p className="text-xs text-slate-400">
-                      Módulo: <span className="text-emerald-400">{a.moduloEnturOS}</span>
+                      Módulo:{" "}
+                      <span className="text-emerald-400">
+                        {a.moduloEnturOS}
+                      </span>
                     </p>
                   </div>
                 ))}

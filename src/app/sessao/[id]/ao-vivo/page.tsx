@@ -16,7 +16,7 @@ export interface SessaoAoVivo {
   agenciaNome: string;
   vendedorNome: string;
   status: string;
-  respostas: { perguntaId: number; resposta: boolean }[];
+  respostas: { perguntaId: number; resposta: boolean; severidade: number | null }[];
   dados: {
     vendasMes: number;
     ticketMedio: number;
