@@ -49,7 +49,7 @@ export default function HomePage() {
       <Navbar />
       <div className="max-w-4xl mx-auto px-6 py-12">
         <div className="mb-12 flex flex-col items-center">
-          <EnturLogo size="lg" showTagline />
+          <EnturLogo size="lg"  />
           <div className="mt-5 flex items-center gap-3">
             <div className="h-px w-10 bg-gradient-to-r from-transparent to-purple-500/30" />
             <p className="text-sm text-slate-400 tracking-wide">

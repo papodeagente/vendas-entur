@@ -43,7 +43,7 @@ function LoginForm() {
       <div className="w-full max-w-sm">
         {/* Logo */}
         <div className="mb-10 flex flex-col items-center">
-          <EnturLogo size="lg" showTagline />
+          <EnturLogo size="lg"  />
           <div className="mt-6 flex items-center gap-3">
             <div className="h-px w-12 bg-gradient-to-r from-transparent to-purple-500/40" />
             <p className="text-xs text-slate-500 uppercase tracking-widest">
