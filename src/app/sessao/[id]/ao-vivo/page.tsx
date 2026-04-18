@@ -10,6 +10,7 @@ import { NeedPayoffFase } from "@/components/fases/NeedPayoffFase";
 import { FechamentoFase } from "@/components/fases/FechamentoFase";
 import { PainelCoach } from "@/components/coach/PainelCoach";
 import { DinheiroAcumulado } from "@/components/coach/DinheiroAcumulado";
+import { EnturLogo } from "@/components/EnturLogo";
 
 export interface SessaoAoVivo {
   id: number;
@@ -117,27 +118,31 @@ export default function SessaoAoVivoPage({
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-slate-100">
       {/* Header */}
-      <header className="border-b border-slate-800 px-6 py-4">
+      <header className="border-b border-slate-800/80 bg-slate-900/90 backdrop-blur-sm px-6 py-3">
         <div className="flex items-center justify-between max-w-[1600px] mx-auto">
-          <div>
-            <a
-              href={`/sessao/${id}`}
-              className="text-xs text-slate-500 hover:text-slate-300"
-            >
-              ← Modo formulário
+          <div className="flex items-center gap-5">
+            <a href="/" className="flex items-center">
+              <EnturLogo size="sm" />
             </a>
-            <h1 className="text-lg font-bold mt-1">
-              {sessao.agenciaNome}
-              <span className="text-slate-500 font-normal ml-3">
-                · {sessao.vendedorNome}
-              </span>
-            </h1>
+            <div className="h-5 w-px bg-slate-800" />
+            <div>
+              <a
+                href={`/sessao/${id}`}
+                className="text-[10px] text-slate-500 hover:text-slate-300 transition-colors"
+              >
+                ← formulário
+              </a>
+              <h1 className="text-sm font-semibold">
+                {sessao.agenciaNome}
+                <span className="text-slate-500 font-normal ml-2">
+                  · {sessao.vendedorNome}
+                </span>
+              </h1>
+            </div>
           </div>
-          <div className="text-xs text-slate-400">
-            <span className="px-2 py-1 rounded bg-slate-800 text-emerald-400">
-              SPIN Ao Vivo
-            </span>
-          </div>
+          <span className="text-[10px] uppercase tracking-widest px-3 py-1 rounded-full bg-gradient-to-r from-[#FF1744]/10 to-[#AA00FF]/10 border border-purple-500/20 text-purple-300">
+            SPIN Ao Vivo
+          </span>
         </div>
       </header>
 

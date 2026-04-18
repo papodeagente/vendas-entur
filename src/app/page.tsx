@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Navbar } from "@/components/Navbar";
+import { EnturLogo } from "@/components/EnturLogo";
 
 interface Sessao {
   id: number;
@@ -47,13 +48,15 @@ export default function HomePage() {
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
       <Navbar />
       <div className="max-w-4xl mx-auto px-6 py-12">
-        <div className="mb-12 text-center">
-          <h1 className="text-4xl font-bold text-white mb-2">
-            Sessão Estratégica
-          </h1>
-          <p className="text-slate-400 text-lg">
-            Simulador de Dinheiro na Mesa — Entur OS
-          </p>
+        <div className="mb-12 flex flex-col items-center">
+          <EnturLogo size="lg" showTagline />
+          <div className="mt-5 flex items-center gap-3">
+            <div className="h-px w-10 bg-gradient-to-r from-transparent to-purple-500/30" />
+            <p className="text-sm text-slate-400 tracking-wide">
+              Sessão Estratégica — Dinheiro na Mesa
+            </p>
+            <div className="h-px w-10 bg-gradient-to-l from-transparent to-purple-500/30" />
+          </div>
         </div>
 
         <Card className="mb-8 bg-slate-800/50 border-slate-700">
