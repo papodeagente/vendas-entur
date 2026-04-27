@@ -2,197 +2,261 @@ export type Alavanca = "recuperacao" | "recorrencia" | "indicacao";
 
 export interface Pergunta {
   id: number;
+  bloco: Alavanca;
   texto: string;
   porqueImporta: string;
   alavancas: Alavanca[];
   moduloEnturOS: string;
   fatorPerda: string;
   // SPIN Selling (modo ao vivo)
-  perguntaSpin: string; // pergunta aberta para ler em voz alta
-  aprofundamento: string; // follow-up quando o cliente confirma o problema
-  implicacao: string; // pergunta para amplificar a consequência (com {valor})
-  needPayoff: string; // pergunta para fazer o cliente articular a solução
+  perguntaSpin: string;
+  aprofundamento: string;
+  implicacao: string;
+  needPayoff: string;
 }
 
+// 10 perguntas reorganizadas em 3 BLOCOS focados nas alavancas que o CRM resolve.
+// Princípio: cada pergunta deve mapear DIRETAMENTE uma dor que o Entur OS automatiza.
 export const PERGUNTAS: Pergunta[] = [
+  // ─────────────────────────────────────────────
+  // BLOCO RECUPERAÇÃO (4 perguntas) — leads que pediram orçamento e sumiram
+  // ─────────────────────────────────────────────
   {
     id: 1,
-    texto: "Você investe em anúncios pagos (Google, Meta, etc.)?",
+    bloco: "recuperacao",
+    texto: "Você já usa algum CRM para gerenciar leads e clientes?",
     porqueImporta:
-      "Sem anúncios, o volume de leads depende exclusivamente de orgânico — o fluxo é imprevisível e impossível de escalar.",
-    alavancas: ["recuperacao"],
-    moduloEnturOS: "Gestão de Tráfego Pago",
-    fatorPerda: "Sem tráfego pago, 100% dos leads potenciais de mídia são perdidos.",
-    perguntaSpin:
-      "Como vocês trazem leads novos hoje? Investem em Google, Meta ou é tudo indicação e orgânico?",
-    aprofundamento:
-      "E você consegue prever quantos leads vão chegar mês que vem? O que acontece quando o mês está fraco?",
-    implicacao:
-      "Se hoje o fluxo de leads é imprevisível, quanto isso custa em meses fracos? Quanto vocês deixam de vender quando o orgânico cai?",
-    needPayoff:
-      "Se vocês tivessem uma máquina de leads previsível, rodando Google + Meta com CPL controlado, o que isso mudaria no seu planejamento?",
-  },
-  {
-    id: 2,
-    texto: "Você faz prospecção orgânica ativa (redes sociais, parcerias, eventos)?",
-    porqueImporta:
-      "Prospecção orgânica complementa o pago e cria autoridade. Sem ela, o custo por lead fica mais alto.",
-    alavancas: ["recuperacao"],
-    moduloEnturOS: "Módulo de Prospecção Orgânica",
-    fatorPerda: "Sem prospecção orgânica, perde-se o canal de menor custo por lead.",
-    perguntaSpin:
-      "Além de anúncios, vocês têm uma rotina de prospecção ativa — rede social, parceria, evento?",
-    aprofundamento:
-      "Quem na equipe é responsável por isso hoje? Quanto tempo por semana eles dedicam?",
-    implicacao:
-      "Sem prospecção orgânica ativa, seu CPL fica refém do leilão do Meta. Se o CPL dobrar, qual o impacto no fechamento?",
-    needPayoff:
-      "Se a equipe tivesse um playbook de prospecção orgânica (parcerias, indicação, conteúdo), quanto isso reduziria sua dependência de tráfego pago?",
-  },
-  {
-    id: 3,
-    texto: "Você tem landing pages com UTM para rastrear origem dos leads?",
-    porqueImporta:
-      "Sem UTM, é impossível saber qual canal gera resultado. Você investe sem saber onde está o retorno.",
-    alavancas: ["recuperacao"],
-    moduloEnturOS: "Landing Pages com Rastreamento UTM",
-    fatorPerda: "Sem rastreamento, impossível otimizar investimento em marketing.",
-    perguntaSpin:
-      "Quando um lead chega, você sabe exatamente por qual canal ele veio — campanha, criativo, palavra-chave?",
-    aprofundamento:
-      "E como você decide hoje em qual canal investir mais? Com base em quê?",
-    implicacao:
-      "Se você não sabe qual canal está vendendo, está investindo no escuro. Quanto você acha que está queimando em mídia que não converte?",
-    needPayoff:
-      "Se cada venda fechada mostrasse a origem (campanha, criativo, vendedor), como isso mudaria sua decisão de investimento em marketing?",
-  },
-  {
-    id: 4,
-    texto: "Você já usa algum CRM para gerenciar seus leads e clientes?",
-    porqueImporta:
-      "O CRM é o coração da operação comercial. Sem ele, leads se perdem, follow-up não acontece e o dinheiro escoa.",
+      "Sem CRM, leads se perdem na caixa de entrada do vendedor. Não há histórico, não há automação, não há rastreio.",
     alavancas: ["recuperacao", "recorrencia", "indicacao"],
     moduloEnturOS: "CRM Kanban + Carteira de Clientes",
     fatorPerda:
-      "Sem CRM, 100% dos atendimentos perdidos viram perda permanente. Com CRM, recupera-se até 40%.",
+      "Sem CRM, 100% dos atendimentos perdidos viram perda permanente. Com CRM + automação, recupera-se ~10-18%.",
     perguntaSpin:
-      "Quando um lead chega e não compra no primeiro atendimento, o que acontece com ele nos próximos 7 dias?",
+      "Você já usa algum CRM hoje para gerenciar seus leads e clientes? Como é o sistema?",
     aprofundamento:
-      "E quando o vendedor sai de férias ou desliga — os leads dele ficam com quem? Como vocês garantem que ninguém cai?",
+      "E quando o vendedor sai de férias ou desliga, o que acontece com os leads dele? Como vocês garantem que ninguém cai?",
     implicacao:
       "Se hoje você perde ~R$ {valorRecuperacaoMes} por mês em atendimentos sem follow-up, em 12 meses isso vira mais de R$ {valorRecuperacaoAno}. Como isso afeta seu plano de crescimento?",
     needPayoff:
-      "Se você tivesse um processo que recuperasse 30% desses atendimentos perdidos automaticamente, como isso mudaria o seu mês?",
+      "Se existisse um sistema que, no momento que o lead não respondeu em 48h, disparasse uma sequência de mensagens personalizadas pra recuperar ele — sem o vendedor precisar lembrar — o que isso mudaria no seu mês?",
   },
   {
-    id: 5,
-    texto: "Você tem processo definido para atender leads desconhecidos (novos)?",
+    id: 2,
+    bloco: "recuperacao",
+    texto:
+      "Quando um lead pede orçamento e não responde, alguém faz follow-up?",
     porqueImporta:
-      "Lead novo sem processo = lead perdido. O tempo de resposta e a cadência de follow-up definem a conversão.",
+      "Lead frio sem follow-up estruturado é venda perdida. A maioria das compras acontece entre o 5º e 12º contato.",
     alavancas: ["recuperacao"],
     moduloEnturOS: "Automação de Follow-up + Cadência",
-    fatorPerda: "Sem processo para desconhecidos, a maioria dos leads novos não é trabalhada.",
+    fatorPerda:
+      "Sem cadência automatizada, 80% dos leads não recebem 2º contato e somem.",
     perguntaSpin:
-      "Quando um lead novo cai (alguém que vocês nunca conversaram), qual é exatamente o passo-a-passo do atendimento?",
+      "Quando um lead pede orçamento e não responde, o que acontece? Alguém faz follow-up? Em quanto tempo?",
     aprofundamento:
-      "E em quanto tempo o primeiro contato acontece? Quantos toques até desistir do lead?",
+      "Quantos toques o vendedor faz antes de desistir? E quando ele desiste, o lead fica salvo em algum lugar ou some de vez?",
     implicacao:
-      "Se o primeiro contato demora mais de 1h, a conversão despenca. Quantos leads vocês recebem por mês que acabam sem segunda tentativa?",
+      "Se 80% dos seus leads silenciosos não recebem 2º contato e cada um custou R$ {custoLeadDesperdicado} pra chegar, isso é dinheiro queimado. Como você lida com essa conta?",
     needPayoff:
-      "Se toda vez que um lead entrasse, uma cadência automática de 3-5 toques disparasse — WhatsApp, e-mail, ligação — quanto isso aumentaria sua conversão?",
+      "Imagina que toda vez que um lead caísse em silêncio, uma cadência de 3-5 toques disparasse automaticamente — WhatsApp, e-mail, lembrete pro vendedor. Quanto isso aumentaria sua conversão?",
+  },
+  {
+    id: 3,
+    bloco: "recuperacao",
+    texto:
+      "Vocês sabem quantos orçamentos foram enviados/mês e quantos viraram venda?",
+    porqueImporta:
+      "Sem rastreio, é impossível saber onde está o gargalo. Decisões viram achismo.",
+    alavancas: ["recuperacao"],
+    moduloEnturOS: "Dashboard de Funil + Conversão",
+    fatorPerda:
+      "Sem dashboard, gargalos passam despercebidos por meses — e cada mês cego custa caro.",
+    perguntaSpin:
+      "Vocês sabem quantos orçamentos são enviados por mês e quantos viram venda? E os que não viraram — ficam em alguma lista ou somem?",
+    aprofundamento:
+      "E como vocês decidem onde investir energia — por dado ou por sensação? Já aconteceu de gastar com tráfego quando o problema era outro?",
+    implicacao:
+      "Sem indicador, o gargalo passa despercebido. Você pode estar gastando com tráfego quando o problema é conversão. Quanto tempo já passou sem essa visibilidade?",
+    needPayoff:
+      "Se você tivesse um painel mostrando, em tempo real, quantos orçamentos saíram, quantos foram respondidos, quantos viraram venda — por vendedor, por canal — quanto mais rápido vocês corrigiriam rota?",
+  },
+  {
+    id: 4,
+    bloco: "recuperacao",
+    texto:
+      "Se um lead reaparece 3 meses depois, vocês têm o histórico do que pediu?",
+    porqueImporta:
+      "Lead que volta encontrando 'começo do zero' sente desinteresse. Lead que volta e vê seu histórico se sente cuidado — e fecha mais.",
+    alavancas: ["recuperacao", "recorrencia"],
+    moduloEnturOS: "Carteira de Clientes + Histórico Completo",
+    fatorPerda:
+      "Sem histórico, conversão de lead que retorna cai pela metade.",
+    perguntaSpin:
+      "Se um lead reaparece 3 meses depois pedindo informação, vocês têm o histórico do que ele pediu antes ou começam do zero?",
+    aprofundamento:
+      "E quando troca o vendedor — outro atendente assume — ele tem acesso a essa história ou também recomeça?",
+    implicacao:
+      "Cada vez que um lead que já demonstrou interesse é tratado como novo, a chance de conversão cai. Quantas vezes por mês isso acontece sem ninguém perceber?",
+    needPayoff:
+      "Imagina abrir o nome do lead e ver na hora: tudo que ele pediu, todas as conversas, todos os toques anteriores. Quanto isso aceleraria o atendimento?",
+  },
+
+  // ─────────────────────────────────────────────
+  // BLOCO RECORRÊNCIA (3 perguntas) — clientes da base que somem
+  // ─────────────────────────────────────────────
+  {
+    id: 5,
+    bloco: "recorrencia",
+    texto:
+      "Vocês sabem datas-chave dos clientes (aniversário, última compra) e usam pra agir?",
+    porqueImporta:
+      "Cliente da base é 5x mais barato que cliente novo — mas só converte se for abordado no momento certo.",
+    alavancas: ["recorrencia"],
+    moduloEnturOS: "Gatilhos Automáticos por Data",
+    fatorPerda:
+      "Sem gatilhos por data, clientes da base compram em outra agência sem nem ser abordados.",
+    perguntaSpin:
+      "Vocês sabem quando é o aniversário dos clientes? Ou a data da última compra? Usam isso pra alguma ação automática?",
+    aprofundamento:
+      "E quem na equipe é responsável por lembrar? Ou depende de o vendedor olhar a planilha por conta própria?",
+    implicacao:
+      "Cliente que viajou ano passado e a gente não aborda 3 meses antes do próximo ciclo, compra de outro. Quantos desses já foram pra concorrente sem você notar?",
+    needPayoff:
+      "Se uma ferramenta identificasse sozinha quais clientes estão no momento ideal de recompra — aniversário próximo, tempo sem comprar — e avisasse o vendedor: 'liga pra esse aqui hoje'. Como seria isso pra equipe?",
   },
   {
     id: 6,
-    texto: "Seus vendedores usam scripts ou roteiros de venda padronizados?",
+    bloco: "recorrencia",
+    texto:
+      "Tem cliente que comprou uma vez e nunca mais voltou? Vocês sabem quantos?",
     porqueImporta:
-      "Script padroniza a qualidade do atendimento. Sem ele, cada vendedor atende de um jeito e a conversão varia muito.",
-    alavancas: ["recuperacao"],
-    moduloEnturOS: "Scripts de Venda + Playbook Comercial",
-    fatorPerda: "Sem scripts, a taxa de conversão fica abaixo do benchmark do mercado.",
+      "Cliente inativo é dinheiro guardado na geladeira. Você já gastou pra adquirir, ele já confiou em você. Reativar custa praticamente zero.",
+    alavancas: ["recorrencia"],
+    moduloEnturOS: "Segmentação Automática de Inativos",
+    fatorPerda:
+      "Sem visibilidade de inativos, taxa de reativação fica em 0%.",
     perguntaSpin:
-      "Se eu pegar seus 3 melhores e seus 3 piores vendedores, a diferença de conversão entre eles é grande?",
+      "Tem cliente que comprou uma vez e nunca mais voltou? Vocês sabem quantos estão nessa situação hoje?",
     aprofundamento:
-      "E o que o melhor faz de diferente? Esse conhecimento está documentado ou só na cabeça dele?",
+      "E quantos % da sua base você acha que está inativa há mais de 90 dias? Vocês conseguem listar agora ou só por estimativa?",
     implicacao:
-      "Se o vendedor mediano converte metade do melhor, você está deixando 50% de venda na mesa por falta de padronização. Quanto é isso por mês?",
+      "Você tem ~{clientesInativos} clientes inativos. Cada um já confiou em você e já pagou ticket cheio. Se 15% voltassem, são R$ {valorRecorrenciaAno}/ano que você não está pegando. Como isso te impacta?",
     needPayoff:
-      "Se todo vendedor tivesse o mesmo playbook do seu melhor — script por etapa, objeções mapeadas — quanto a conversão da equipe toda subiria?",
+      "Se o sistema gerasse automaticamente uma lista mensal de inativos e disparasse campanha de reativação personalizada com 1 clique, quanto disso voltaria pra mesa?",
   },
   {
     id: 7,
-    texto: "Você tem um processo de pré-venda estruturado (qualificação antes da proposta)?",
+    bloco: "recorrencia",
+    texto:
+      "Existe processo automático pra reativar cliente sem comprar há X meses?",
     porqueImporta:
-      "Pré-venda filtra os leads quentes. Sem ela, o vendedor gasta tempo com quem não vai comprar.",
-    alavancas: ["recuperacao"],
-    moduloEnturOS: "Etapa de Pré-Vendas no CRM",
-    fatorPerda: "Sem pré-venda, vendedores perdem tempo com leads não qualificados.",
+      "Reativação manual depende de alguém lembrar. Reativação automática nunca falha, dispara no timing certo e não consome o tempo do vendedor.",
+    alavancas: ["recorrencia"],
+    moduloEnturOS: "Automação de Pós-Venda + Recompra",
+    fatorPerda:
+      "Sem automação, taxa de recompra cai de 8% para 1% ao mês — perda de 7x o potencial.",
     perguntaSpin:
-      "Antes do vendedor chegar no cliente, existe alguém que qualifica o lead — vê se tem fit, orçamento, urgência?",
+      "Existe algum processo automático rodando hoje pra reativar cliente que está sem comprar há mais de X meses?",
     aprofundamento:
-      "E do total de leads, quantos % realmente têm perfil pra comprar? O vendedor gasta energia em quantos que nunca iam fechar?",
+      "E o que acontece se ninguém manda nada por 6, 9, 12 meses? Esse cliente compra de outro ou não compra mais ninguém?",
     implicacao:
-      "Se 40% do tempo do vendedor é com lead que não compra, você está pagando salário pra desperdiçar hora. Qual o custo disso por mês?",
+      "Vender pra base é 5x mais barato que captar novo. Se a recompra está em 1% ao mês quando poderia estar em 8%, são R$ {valorRecorrenciaAno}/ano deixados na mesa. Como isso afeta seu CAC médio?",
     needPayoff:
-      "Se o vendedor só recebesse leads já qualificados — com orçamento, urgência e fit confirmados — quanto a produtividade da equipe subiria?",
+      "Imagina que toda data-gatilho dispare uma sequência automática de mensagens personalizadas — pós-viagem, aniversário, X meses sem comprar. Quanto isso multiplicaria a receita sem aumentar custo de aquisição?",
   },
+
+  // ─────────────────────────────────────────────
+  // BLOCO INDICAÇÃO (3 perguntas) — multiplicador grátis
+  // ─────────────────────────────────────────────
   {
     id: 8,
-    texto: "Você acompanha indicadores comerciais (taxa de conversão, ciclo de venda, ticket médio)?",
+    bloco: "indicacao",
+    texto:
+      "Depois que o cliente volta de viagem, vocês fazem contato e pedem avaliação?",
     porqueImporta:
-      "Sem indicadores, não há como saber se a operação está melhorando ou piorando. Decisões viram achismo.",
-    alavancas: ["recorrencia"],
-    moduloEnturOS: "Dashboard de Indicadores Comerciais",
-    fatorPerda: "Sem indicadores, impossível identificar gargalos e oportunidades.",
+      "Pós-viagem é o momento de pico emocional. Quem não pede indicação aí, perde a maior janela de oportunidade do ciclo.",
+    alavancas: ["indicacao"],
+    moduloEnturOS: "Automação de Pós-Viagem + NPS",
+    fatorPerda:
+      "Sem pós-viagem ativo, 95% das oportunidades de indicação se perdem.",
     perguntaSpin:
-      "Se eu te perguntar agora qual a taxa de conversão da sua equipe nos últimos 30 dias, você consegue me responder?",
+      "Depois que o cliente volta de viagem, vocês fazem algum contato pra saber como foi? Pedem avaliação?",
     aprofundamento:
-      "E como vocês decidem onde investir tempo e dinheiro — por indicador ou por sensação?",
+      "E quanto tempo depois? Em 1 dia, 1 semana, 1 mês? Quem dispara isso — o vendedor lembra ou tem processo?",
     implicacao:
-      "Sem indicador, você não sabe onde está o gargalo. Pode estar gastando com tráfego quando o problema é conversão. Isso já aconteceu?",
+      "O cliente que acabou de voltar feliz é quem mais indica. Se vocês não abordam nas primeiras 72h, a euforia some. Quantas indicações por mês estão se perdendo nessa janela?",
     needPayoff:
-      "Se você tivesse um dashboard com conversão, ciclo de venda e ticket médio em tempo real — por vendedor, por canal — quanto mais rápido vocês corrigiriam rota?",
+      "Se 24h depois de o cliente voltar, o sistema disparasse automaticamente um pedido de avaliação + NPS + pedido de indicação no momento de pico de satisfação, quanto isso geraria de indicação por mês?",
   },
   {
     id: 9,
-    texto: "Você tem processos ativos para clientes da base (recompra, pós-venda)?",
+    bloco: "indicacao",
+    texto:
+      "Vocês pedem indicação de forma estruturada (com momento e mensagem definidos)?",
     porqueImporta:
-      "Cliente ativo é 5x mais barato que cliente novo. Sem processo de recompra, ele compra do concorrente.",
-    alavancas: ["recorrencia"],
-    moduloEnturOS: "Automação de Pós-Venda + Recompra",
-    fatorPerda: "Sem processo ativo, a taxa de recompra cai de 8% para 1% ao mês.",
+      "Indicação acidental rende 5% das vendas. Programa estruturado rende 22%. Diferença vai direto pro caixa.",
+    alavancas: ["indicacao"],
+    moduloEnturOS: "Programa de Indicação no CRM",
+    fatorPerda:
+      "Sem programa estruturado, taxa de indicação fica em ~5% — versus 22% com sistema.",
     perguntaSpin:
-      "Um cliente que comprou há 6 meses e sumiu — vocês têm alguma forma estruturada de trazer ele de volta?",
+      "Vocês pedem indicação de forma estruturada? Tem algum momento definido pra fazer isso, ou acontece quando o vendedor lembra?",
     aprofundamento:
-      "E hoje, quanto % da sua base compra de novo em 12 meses? Vocês medem isso?",
+      "E quando pede, é com qual incentivo? Como acompanha quem indicou e quem foi indicado?",
     implicacao:
-      "Vender pra cliente da base é 5x mais barato que captar novo. Se a recompra está em 1% ao mês quando poderia estar em 8%, a perda é de R$ {valorRecorrenciaAno} por ano. Como isso afeta seu crescimento?",
+      "Indicação converte 45% vs 15% de lead frio. Se vocês fazem ~{vendasMes} vendas/mês e o índice fica em 5%, são R$ {valorIndicacaoAno}/ano que vocês deixam de gerar — sem precisar gastar 1 centavo em mídia. Quanto disso é aceitável?",
     needPayoff:
-      "Se automaticamente todo cliente recebesse uma mensagem no tempo certo de recompra — e inativos entrassem em campanha de reativação — quanto isso multiplicaria sua receita sem aumentar CAC?",
+      "Imagina que toda venda fechada disparasse automaticamente um pedido de indicação com mensagem certa, timing certo, incentivo certo. Em 6 meses, quanto da sua base viria de indicação?",
   },
   {
     id: 10,
-    texto: "Você tem programa de indicação ativa (pede indicação de forma estruturada)?",
+    bloco: "indicacao",
+    texto:
+      "Se um cliente indica alguém, vocês rastreiam? Sabem quem mais indica?",
     porqueImporta:
-      "Indicação é o canal com maior taxa de conversão (45%). Sem processo, acontece por acaso.",
+      "Cliente indicador é a alavanca mais subestimada. Sem rastreio, você não recompensa nem multiplica seus melhores clientes.",
     alavancas: ["indicacao"],
-    moduloEnturOS: "Programa de Indicação no CRM",
-    fatorPerda: "Sem programa de indicação, apenas 20% do potencial de indicações é capturado.",
+    moduloEnturOS: "Rastreamento de Indicações + Programa de Recompensa",
+    fatorPerda:
+      "Sem rastreio, top indicadores não são identificados nem incentivados — e param de indicar.",
     perguntaSpin:
-      "Quando um cliente compra e fica satisfeito, vocês pedem indicação de forma sistemática? Ou acontece só quando o vendedor lembra?",
+      "Se um cliente indica alguém, vocês rastreiam isso? Sabem quem são os clientes que mais indicam hoje?",
     aprofundamento:
-      "E quantas indicações por mês vocês recebem hoje? Quanto disso você acha que poderia ser 5x maior?",
+      "E como vocês recompensam ou agradecem quem indica? Tem algum programa formal ou é caso a caso?",
     implicacao:
-      "Indicação converte 45% vs. 15% de lead frio. Se hoje vocês têm só X por mês e poderiam ter 5X, isso representa R$ {valorIndicacaoAno} por ano deixado na mesa.",
+      "Você provavelmente tem 5-10 clientes que indicam muito e nunca foram identificados. Sem reconhecimento, eles param. Quantos R$/ano isso representa em vendas que dependiam dessa pessoa?",
     needPayoff:
-      "Se toda venda fechada disparasse automaticamente um pedido de indicação — com incentivo, timing e mensagem certa — em 6 meses, quanto da sua base viria de indicação?",
+      "Se você abrisse um painel e visse, em ranking, quem mais indicou nos últimos 12 meses — com nome, valor gerado e poder de continuar — o que faria com essa informação?",
   },
 ];
 
 export const PERGUNTAS_POR_ALAVANCA: Record<Alavanca, number[]> = {
-  recuperacao: [1, 2, 3, 4, 5, 6, 7],
-  recorrencia: [4, 8, 9],
-  indicacao: [4, 10],
+  recuperacao: [1, 2, 3, 4],
+  recorrencia: [5, 6, 7],
+  indicacao: [8, 9, 10],
 };
 
-// Ordem sugerida na Fase 2 (Problema): Recuperação primeiro, depois Recorrência, depois Indicação
-export const ORDEM_FASE_PROBLEMA: number[] = [4, 5, 6, 7, 1, 2, 3, 8, 9, 10];
+// Ordem na Fase 2 (Problema): Recuperação → Recorrência → Indicação
+export const ORDEM_FASE_PROBLEMA: number[] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+
+// Labels e estilo por bloco (usado no UI)
+export const BLOCOS: Record<
+  Alavanca,
+  { label: string; descricao: string; emoji: string }
+> = {
+  recuperacao: {
+    label: "Recuperação",
+    descricao: "Leads que pediram orçamento e sumiram",
+    emoji: "🎯",
+  },
+  recorrencia: {
+    label: "Recorrência",
+    descricao: "Clientes da base que somem",
+    emoji: "🔄",
+  },
+  indicacao: {
+    label: "Indicação",
+    descricao: "Multiplicador grátis pós-viagem",
+    emoji: "🌱",
+  },
+};

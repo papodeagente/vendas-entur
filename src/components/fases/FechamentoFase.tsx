@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { dinheiroNaMesa } from "@/lib/calculo";
+import { dinheiroNaMesa, TAXAS_REFERENCIA } from "@/lib/calculo";
+import { PERGUNTAS, BLOCOS, type Alavanca } from "@/lib/perguntas";
 import type { SessaoAoVivo } from "@/app/sessao/[id]/ao-vivo/page";
 
 interface Props {
@@ -23,7 +24,7 @@ const CTAS: { key: CTA; titulo: string; descricao: string; script: string }[] = 
   {
     key: "demo",
     titulo: "Agendar demo técnica",
-    descricao: "Cliente pediu para ver a ferramenta funcionando antes de decidir",
+    descricao: "Cliente quer ver a ferramenta funcionando",
     script: `"Combinado. Vou te mandar 3 horários pra uma demo de 45 min. Quem mais do seu time precisa ver? O ideal é trazer quem vai usar no dia-a-dia."`,
   },
   {
@@ -35,10 +36,34 @@ const CTAS: { key: CTA; titulo: string; descricao: string; script: string }[] = 
   {
     key: "piloto",
     titulo: "Piloto em 1 alavanca",
-    descricao: "Cliente hesitante — começa focado (ex: só Recuperação)",
-    script: `"Que tal a gente começar com uma alavanca só? Rodamos 60 dias focados em Recuperação. Se entregar o retorno que mostrei aqui, a gente expande. Se não, não paga o resto."`,
+    descricao: "Cliente hesitante — começar focado (ex: só Recuperação)",
+    script: `"Que tal a gente começar com uma alavanca só? Rodamos 60 dias focados na que mais doer pra você. Se entregar o retorno que mostrei aqui, a gente expande. Se não, não paga o resto."`,
   },
 ];
+
+const ANTI_OBJECOES: { obj: string; resp: (vars: Record<string, string>) => string }[] =
+  [
+    {
+      obj: "É caro",
+      resp: (v) =>
+        `O sistema custa ${v.precoCrm}/mês. Você perde ${v.perDay}/dia. Em ${v.diasPayback} dias o sistema se paga. O resto é lucro.`,
+    },
+    {
+      obj: "Já tentei CRM",
+      resp: () =>
+        `CRM genérico não tem as automações de turismo. Ele não sabe que 6 meses antes do aniversário é o momento de vender. Não tem gatilho de reativação por tempo sem compra. Não dispara pedido de indicação no pós-viagem.`,
+    },
+    {
+      obj: "Minha equipe não vai usar",
+      resp: () =>
+        `O sistema faz a ação pela equipe. Não depende do vendedor lembrar. A automação dispara sozinha — vendedor só recebe o lead pronto pra conversar.`,
+    },
+    {
+      obj: "Preciso pensar",
+      resp: (v) =>
+        `Entendo. Só um dado: a cada dia sem processo, são ${v.perDay} que passam pela sua mão. Em 30 dias de "pensar", são ${v.por30Dias}. Esse é o custo de esperar.`,
+    },
+  ];
 
 export function FechamentoFase({ sessao, onRefresh }: Props) {
   const respostasMap: Record<number, boolean> = {};
@@ -46,9 +71,11 @@ export function FechamentoFase({ sessao, onRefresh }: Props) {
   const r = sessao.dados ? dinheiroNaMesa(respostasMap, sessao.dados) : null;
 
   const [ctaSelecionado, setCtaSelecionado] = useState<CTA | null>(null);
+  const [precoCrm, setPrecoCrm] = useState(TAXAS_REFERENCIA.precoCrmDefault);
   const [email, setEmail] = useState(sessao.prospect?.email || "");
   const [whatsapp, setWhatsapp] = useState(sessao.prospect?.whatsapp || "");
   const [salvando, setSalvando] = useState(false);
+  const [objAberta, setObjAberta] = useState<string | null>(null);
 
   async function salvarContato() {
     setSalvando(true);
@@ -67,52 +94,223 @@ export function FechamentoFase({ sessao, onRefresh }: Props) {
     onRefresh();
   }
 
-  const problemasQtd = Object.values(respostasMap).filter((v) => v === false).length;
+  // Resumo das alavancas com problema confirmado
+  function temDor(al: Alavanca): boolean {
+    return PERGUNTAS.filter((p) => p.bloco === al).some(
+      (p) => respostasMap[p.id] === false
+    );
+  }
+
+  // Frases capturadas no Need-Payoff (palavras dele descrevendo a solução)
+  const frasesPayoff = sessao.frases.filter((f) => f.fase === "needPayoff");
+  const frasesOuro = sessao.frases.filter((f) => f.fase === "situacao");
+
+  // Recomputa com preço editável
+  const recomputado = sessao.dados
+    ? dinheiroNaMesa(respostasMap, sessao.dados, { precoCrmMes: precoCrm })
+    : r;
+
+  const vendasMesesPayback =
+    recomputado && r && sessao.dados
+      ? Math.ceil(
+          precoCrm /
+            (sessao.dados.ticketMedio * (sessao.dados.comissaoPct / 100))
+        )
+      : 0;
+
+  const objVars = recomputado && r
+    ? {
+        precoCrm: brl(precoCrm),
+        perDay: brl(recomputado.perDay),
+        por30Dias: brl(recomputado.totalMes),
+        diasPayback: String(
+          Math.ceil(precoCrm / (recomputado.perDay || 1))
+        ),
+      }
+    : { precoCrm: "", perDay: "", por30Dias: "", diasPayback: "" };
 
   return (
     <div className="space-y-5 max-w-4xl">
       {/* Pergunta-gatilho */}
       <div className="p-5 rounded-xl bg-indigo-900/20 border border-indigo-800/40">
         <p className="text-[10px] uppercase tracking-wider text-indigo-400 mb-2">
-          Comprometimento progressivo — pergunte e CALE
+          Pergunta-gatilho — pergunte e CALE
         </p>
         <p className="text-lg text-slate-100 italic leading-relaxed font-medium">
-          &ldquo;{sessao.prospect?.nome || "Me diz"}, faz sentido tudo que a gente conversou?
-          Qual seria o próximo passo natural pra você?&rdquo;
+          &ldquo;{sessao.prospect?.nome || "Me diz"}, faz sentido tudo que a
+          gente conversou? Qual seria o próximo passo natural pra você?&rdquo;
         </p>
         <p className="text-[11px] text-indigo-300/70 mt-3 italic">
-          Silêncio é bom. A primeira pessoa que fala depois dessa pergunta, perde. Deixe ele dizer primeiro.
+          Silêncio é bom. A primeira pessoa que fala depois dessa pergunta,
+          perde. Deixe ele dizer primeiro.
         </p>
       </div>
 
-      {/* Resumo da sessão */}
-      {r && (
-        <div className="p-5 rounded-xl bg-slate-900/60 border border-slate-800">
-          <p className="text-[10px] uppercase tracking-wider text-slate-500 mb-3">
-            Resumo da sessão
+      {/* Resumo da sessão usando palavras dele */}
+      {r && sessao.dados && (
+        <div className="p-5 rounded-xl bg-slate-900/60 border border-slate-800 space-y-4">
+          <p className="text-[10px] uppercase tracking-wider text-slate-500">
+            Resumo — leia usando os números E as frases dele
           </p>
-          <div className="grid grid-cols-3 gap-4">
-            <div>
-              <p className="text-[11px] text-slate-500">Dores identificadas</p>
-              <p className="text-2xl font-bold text-red-400">{problemasQtd}</p>
-            </div>
-            <div>
-              <p className="text-[11px] text-slate-500">Dinheiro na Mesa / mês</p>
-              <p className="text-2xl font-bold text-emerald-400 tabular-nums">
-                {brl(r.totalMes)}
-              </p>
-            </div>
-            <div>
-              <p className="text-[11px] text-slate-500">Em 12 meses</p>
-              <p className="text-2xl font-bold text-emerald-400 tabular-nums">
-                {brl(r.totalAno)}
+
+          <div className="space-y-2 text-sm">
+            <p className="text-slate-100 font-medium mb-2">
+              {sessao.prospect?.nome || "Vamos lá"}, a gente viu hoje que:
+            </p>
+
+            {temDor("recuperacao") && (
+              <div className="flex items-baseline gap-2 pl-3 border-l-2 border-red-500">
+                <span className="text-red-300">🎯</span>
+                <p className="text-slate-300">
+                  Você perde {sessao.dados.atendPerdidos} atendimentos/mês sem
+                  follow-up →{" "}
+                  <span className="text-red-300 font-bold">
+                    {brl(r.recuperacao)}/mês
+                  </span>{" "}
+                  na mesa
+                </p>
+              </div>
+            )}
+            {temDor("recorrencia") && (
+              <div className="flex items-baseline gap-2 pl-3 border-l-2 border-amber-500">
+                <span className="text-amber-300">🔄</span>
+                <p className="text-slate-300">
+                  Tem {sessao.dados.clientesInativos} clientes inativos sem
+                  reativação →{" "}
+                  <span className="text-amber-300 font-bold">
+                    {brl(r.recorrencia)}/mês
+                  </span>{" "}
+                  na mesa
+                </p>
+              </div>
+            )}
+            {temDor("indicacao") && (
+              <div className="flex items-baseline gap-2 pl-3 border-l-2 border-emerald-500">
+                <span className="text-emerald-300">🌱</span>
+                <p className="text-slate-300">
+                  Não tem programa de indicação ativo →{" "}
+                  <span className="text-emerald-300 font-bold">
+                    {brl(r.indicacao)}/mês
+                  </span>{" "}
+                  na mesa
+                </p>
+              </div>
+            )}
+
+            {/* Frases dele */}
+            {(frasesOuro.length > 0 || frasesPayoff.length > 0) && (
+              <div className="mt-3 pt-3 border-t border-slate-800 space-y-1">
+                <p className="text-[10px] uppercase tracking-wider text-amber-400 mb-2">
+                  Você mesmo me disse:
+                </p>
+                {[...frasesOuro.slice(0, 2), ...frasesPayoff.slice(0, 2)].map(
+                  (f) => (
+                    <p
+                      key={f.id}
+                      className="text-xs text-amber-200 italic pl-3 border-l-2 border-amber-500/50"
+                    >
+                      &ldquo;{f.texto.replace(/^\[\w+\]\s*/, "")}&rdquo;
+                    </p>
+                  )
+                )}
+              </div>
+            )}
+
+            <div className="mt-3 pt-3 border-t border-slate-700">
+              <p className="text-slate-100">
+                O total que está passando pela sua mão:{" "}
+                <span className="text-2xl font-bold text-emerald-300 tabular-nums">
+                  {brl(r.totalMes)}
+                </span>
+                /mês →{" "}
+                <span className="font-bold text-emerald-300">
+                  {brl(r.totalAno)}
+                </span>
+                /ano
               </p>
             </div>
           </div>
         </div>
       )}
 
-      {/* Escolha de CTA */}
+      {/* Ancoragem de preço */}
+      {recomputado && sessao.dados && (
+        <div className="p-5 rounded-xl bg-gradient-to-br from-indigo-900/30 to-purple-900/30 border border-indigo-700/40">
+          <p className="text-[10px] uppercase tracking-wider text-indigo-300 mb-3">
+            Ancoragem de preço — leia em voz alta
+          </p>
+
+          <div className="flex items-center gap-3 mb-4">
+            <label className="text-xs text-slate-400">Preço Entur OS/mês:</label>
+            <input
+              type="number"
+              value={precoCrm}
+              onChange={(e) => setPrecoCrm(Number(e.target.value) || 0)}
+              className="w-28 px-2 py-1 rounded bg-slate-800 border border-slate-700 text-sm text-slate-100 focus:outline-none focus:border-indigo-500"
+            />
+            <span className="text-xs text-slate-500">
+              (default {brl(TAXAS_REFERENCIA.precoCrmDefault)})
+            </span>
+          </div>
+
+          <p className="text-slate-100 leading-relaxed mb-3">
+            &ldquo;O investimento no Entur OS é de{" "}
+            <span className="font-bold text-indigo-300">
+              {brl(precoCrm)}/mês
+            </span>
+            . Ou seja, se ele recuperar{" "}
+            <span className="font-bold text-emerald-300">
+              UMA ÚNICA venda
+            </span>{" "}
+            das {sessao.dados.atendPerdidos} perdidas, já pagou{" "}
+            <span className="font-bold text-emerald-300">
+              {vendasMesesPayback} {vendasMesesPayback === 1 ? "mês" : "meses"}
+            </span>{" "}
+            de sistema.&rdquo;
+          </p>
+
+          <div className="grid grid-cols-3 gap-3 pt-3 border-t border-indigo-700/30">
+            <div className="text-center">
+              <p className="text-[10px] text-slate-400 uppercase">ROI mensal</p>
+              <p className="text-lg font-bold text-emerald-300">
+                {recomputado.roiMensal.toFixed(1)}x
+              </p>
+              <p className="text-[10px] text-slate-500">
+                R$ 1 → R$ {recomputado.roiMensal.toFixed(2)}
+              </p>
+            </div>
+            <div className="text-center">
+              <p className="text-[10px] text-slate-400 uppercase">Payback</p>
+              <p className="text-lg font-bold text-emerald-300">
+                {recomputado.payback.meses === 0
+                  ? "—"
+                  : `${recomputado.payback.meses} ${
+                      recomputado.payback.meses === 1 ? "mês" : "meses"
+                    }`}
+              </p>
+              <p className="text-[10px] text-slate-500">
+                {recomputado.payback.vendasNecessarias} venda
+                {recomputado.payback.vendasNecessarias === 1 ? "" : "s"} pagam
+              </p>
+            </div>
+            <div className="text-center">
+              <p className="text-[10px] text-slate-400 uppercase">
+                Não é custo, é ferramenta
+              </p>
+              <p className="text-xs text-slate-200 italic mt-1">
+                que pega o que já é seu
+              </p>
+            </div>
+          </div>
+
+          <p className="text-[11px] text-indigo-200/70 mt-3 pt-3 border-t border-indigo-700/30 italic">
+            &ldquo;Na prática, o CRM não é um custo. É a ferramenta que pega o
+            dinheiro que JÁ É SEU e que está na mesa.&rdquo;
+          </p>
+        </div>
+      )}
+
+      {/* CTA */}
       <div>
         <p className="text-[10px] uppercase tracking-wider text-slate-500 mb-3">
           Leitura do sinal dele — qual caminho escolher
@@ -135,7 +333,6 @@ export function FechamentoFase({ sessao, onRefresh }: Props) {
         </div>
       </div>
 
-      {/* Script do CTA selecionado */}
       {ctaSelecionado && (
         <div className="p-4 rounded-xl bg-indigo-900/20 border border-indigo-800/40">
           <p className="text-[10px] uppercase tracking-wider text-indigo-400 mb-2">
@@ -147,11 +344,40 @@ export function FechamentoFase({ sessao, onRefresh }: Props) {
         </div>
       )}
 
+      {/* Anti-objeções */}
+      <div className="p-4 rounded-xl bg-slate-900/40 border border-slate-800">
+        <p className="text-[10px] uppercase tracking-wider text-orange-400 mb-3">
+          Anti-objeções — clique se ele soltar uma dessas
+        </p>
+        <div className="space-y-2">
+          {ANTI_OBJECOES.map((o) => (
+            <div key={o.obj}>
+              <button
+                onClick={() => setObjAberta(objAberta === o.obj ? null : o.obj)}
+                className={`w-full text-left px-3 py-2 rounded text-sm transition ${
+                  objAberta === o.obj
+                    ? "bg-orange-900/30 border border-orange-700/40 text-orange-200"
+                    : "bg-slate-800/50 hover:bg-slate-800 text-slate-300"
+                }`}
+              >
+                {objAberta === o.obj ? "▼" : "▶"} &ldquo;{o.obj}&rdquo;
+              </button>
+              {objAberta === o.obj && (
+                <p className="mt-1 px-3 py-2 text-sm text-slate-100 italic leading-relaxed bg-orange-900/10 border-l-2 border-orange-500/50 rounded">
+                  &ldquo;{o.resp(objVars)}&rdquo;
+                </p>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* Captura de contato */}
       <div className="p-5 rounded-xl bg-slate-900/40 border border-slate-800 space-y-3">
         <h3 className="font-semibold">Contato para continuar</h3>
         <p className="text-xs text-slate-500">
-          Só peça depois que ele disser "sim, próximo passo". Antes, não.
+          Só peça depois que ele disser &ldquo;sim, próximo passo&rdquo;. Antes,
+          não.
         </p>
         <div className="grid grid-cols-2 gap-3">
           <input
@@ -178,14 +404,20 @@ export function FechamentoFase({ sessao, onRefresh }: Props) {
         </button>
       </div>
 
-      {/* Próximos passos para o vendedor */}
+      {/* Checklist pós-reunião */}
       <div className="p-4 rounded-xl bg-slate-900/40 border border-slate-800">
         <p className="text-[10px] uppercase tracking-wider text-slate-500 mb-2">
           Checklist pós-reunião (faça hoje)
         </p>
         <ul className="text-sm text-slate-300 space-y-1.5">
           <li>☐ Enviar WhatsApp de agradecimento em 1 hora</li>
-          <li>☐ Agendar próximo passo ({ctaSelecionado ? CTAS.find((c) => c.key === ctaSelecionado)!.titulo.toLowerCase() : "definir"}) em 24h</li>
+          <li>
+            ☐ Agendar próximo passo (
+            {ctaSelecionado
+              ? CTAS.find((c) => c.key === ctaSelecionado)!.titulo.toLowerCase()
+              : "definir"}
+            ) em 24h
+          </li>
           <li>☐ Registrar a sessão no CRM com as frases capturadas</li>
           <li>☐ Enviar PDF de resumo por e-mail até o fim do dia</li>
         </ul>

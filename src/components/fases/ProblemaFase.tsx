@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { PERGUNTAS, ORDEM_FASE_PROBLEMA } from "@/lib/perguntas";
+import { PERGUNTAS, BLOCOS, type Alavanca } from "@/lib/perguntas";
 import type { SessaoAoVivo } from "@/app/sessao/[id]/ao-vivo/page";
 
 interface Props {
@@ -9,6 +9,29 @@ interface Props {
   onConcluir: () => void;
   onRefresh: () => void;
 }
+
+const BLOCO_ORDEM: Alavanca[] = ["recuperacao", "recorrencia", "indicacao"];
+
+const BLOCO_STYLE: Record<
+  Alavanca,
+  { bg: string; border: string; accent: string }
+> = {
+  recuperacao: {
+    bg: "bg-red-900/15",
+    border: "border-red-800/40",
+    accent: "text-red-400",
+  },
+  recorrencia: {
+    bg: "bg-amber-900/15",
+    border: "border-amber-800/40",
+    accent: "text-amber-400",
+  },
+  indicacao: {
+    bg: "bg-emerald-900/15",
+    border: "border-emerald-800/40",
+    accent: "text-emerald-400",
+  },
+};
 
 export function ProblemaFase({ sessao, onConcluir, onRefresh }: Props) {
   const respostasMap: Record<number, boolean> = {};
@@ -18,25 +41,21 @@ export function ProblemaFase({ sessao, onConcluir, onRefresh }: Props) {
     severidadeMap[r.perguntaId] = r.severidade;
   });
 
-  const perguntasOrdenadas = ORDEM_FASE_PROBLEMA
-    .map((id) => PERGUNTAS.find((p) => p.id === id))
-    .filter(Boolean) as typeof PERGUNTAS;
+  const primeiraNaoRespondida =
+    PERGUNTAS.find((p) => respostasMap[p.id] === undefined)?.id || 1;
 
   const [perguntaAtivaId, setPerguntaAtivaId] = useState<number>(
-    perguntasOrdenadas.find((p) => respostasMap[p.id] === undefined)?.id ||
-      perguntasOrdenadas[0].id
+    primeiraNaoRespondida
   );
   const [fraseTexto, setFraseTexto] = useState("");
   const [mostrarAprofundamento, setMostrarAprofundamento] = useState(false);
 
   const perguntaAtiva = PERGUNTAS.find((p) => p.id === perguntaAtivaId)!;
 
-  // Frases capturadas para a pergunta ativa
   const frasesDestaPergunta = sessao.frases.filter(
     (f) => f.fase === "problema" && f.perguntaId === perguntaAtivaId
   );
 
-  // Um problema confirmado (resposta=false) precisa de pelo menos 1 frase
   function problemaTemFrase(pid: number): boolean {
     return sessao.frases.some(
       (f) => f.fase === "problema" && f.perguntaId === pid
@@ -61,10 +80,10 @@ export function ProblemaFase({ sessao, onConcluir, onRefresh }: Props) {
   }
 
   function proximaPergunta() {
-    const idx = perguntasOrdenadas.findIndex((p) => p.id === perguntaAtivaId);
-    const proxima = perguntasOrdenadas
-      .slice(idx + 1)
-      .find((p) => respostasMap[p.id] === undefined);
+    const idx = PERGUNTAS.findIndex((p) => p.id === perguntaAtivaId);
+    const proxima = PERGUNTAS.slice(idx + 1).find(
+      (p) => respostasMap[p.id] === undefined
+    );
     if (proxima) {
       setPerguntaAtivaId(proxima.id);
       setMostrarAprofundamento(false);
@@ -86,55 +105,124 @@ export function ProblemaFase({ sessao, onConcluir, onRefresh }: Props) {
     onRefresh();
   }
 
-  const problemasConfirmados = Object.keys(respostasMap).filter(
+  function statsBloco(alav: Alavanca) {
+    const ids = PERGUNTAS.filter((p) => p.bloco === alav).map((p) => p.id);
+    const dorForte = ids.filter(
+      (id) => respostasMap[id] === false && severidadeMap[id] === 1
+    ).length;
+    const dorMedia = ids.filter(
+      (id) => respostasMap[id] === false && severidadeMap[id] === 2
+    ).length;
+    const total = dorForte + dorMedia;
+    const respondidas = ids.filter(
+      (id) => respostasMap[id] !== undefined
+    ).length;
+    return {
+      ids,
+      dorForte,
+      dorMedia,
+      total,
+      respondidas,
+      completo: respondidas === ids.length,
+    };
+  }
+
+  const totalProblemas = Object.keys(respostasMap).filter(
     (k) => respostasMap[Number(k)] === false
   ).length;
-  const totalRespondidas = Object.keys(respostasMap).length;
 
-  // Todos os problemas confirmados precisam ter pelo menos 1 frase
   const todosProblemasTemFrase = Object.keys(respostasMap)
     .filter((k) => respostasMap[Number(k)] === false)
     .every((k) => problemaTemFrase(Number(k)));
 
-  const podeAvancar = problemasConfirmados >= 3 && todosProblemasTemFrase;
+  const podeAvancar = totalProblemas >= 3 && todosProblemasTemFrase;
 
-  // Aviso: problemas sem frase
-  const problemasSemFrase = Object.keys(respostasMap)
-    .filter((k) => respostasMap[Number(k)] === false && !problemaTemFrase(Number(k)))
-    .map(Number);
+  const alavancaDominante = BLOCO_ORDEM.find(
+    (al) => statsBloco(al).dorForte >= 2
+  );
 
-  // Check se a pergunta ativa é um problema sem frase (bloqueia "Próxima")
   const ativaEhProblemaSemFrase =
     respostasMap[perguntaAtivaId] === false &&
     !problemaTemFrase(perguntaAtivaId);
 
+  const styleAtiva = BLOCO_STYLE[perguntaAtiva.bloco];
+
   return (
-    <div className="space-y-5 max-w-4xl">
+    <div className="space-y-5 max-w-5xl">
+      {/* Header com 3 blocos */}
+      <div className="grid grid-cols-3 gap-3">
+        {BLOCO_ORDEM.map((alav) => {
+          const stats = statsBloco(alav);
+          const meta = BLOCOS[alav];
+          const style = BLOCO_STYLE[alav];
+          const ehDominante = alavancaDominante === alav;
+          return (
+            <div
+              key={alav}
+              className={`p-3 rounded-lg border ${style.bg} ${style.border} ${
+                ehDominante
+                  ? "ring-2 ring-offset-2 ring-offset-slate-950 ring-current"
+                  : ""
+              } relative`}
+            >
+              {ehDominante && (
+                <span className="absolute -top-2 right-2 text-[9px] px-1.5 py-0.5 rounded-full bg-current text-slate-950 font-bold">
+                  ALAVANCA PRINCIPAL
+                </span>
+              )}
+              <div
+                className={`flex items-baseline justify-between mb-1 ${style.accent}`}
+              >
+                <span className="text-xs font-semibold uppercase tracking-wider">
+                  {meta.emoji} {meta.label}
+                </span>
+                <span className="text-[10px] opacity-70">
+                  {stats.respondidas}/{stats.ids.length}
+                </span>
+              </div>
+              <p className="text-[10px] text-slate-500 mb-2">
+                {meta.descricao}
+              </p>
+              <div className="flex gap-3 text-[10px]">
+                <span className="text-red-400">🔴 {stats.dorForte}</span>
+                <span className="text-amber-400">🟡 {stats.dorMedia}</span>
+                <span className="text-emerald-500">
+                  🟢 {stats.respondidas - stats.total}
+                </span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
       {/* Pergunta ativa */}
-      <div className="p-5 rounded-xl bg-amber-900/20 border border-amber-800/40">
+      <div
+        className={`p-5 rounded-xl border ${styleAtiva.bg} ${styleAtiva.border}`}
+      >
         <div className="flex items-baseline justify-between mb-2">
-          <p className="text-[10px] uppercase tracking-wider text-amber-400">
-            Pergunta SPIN — leia em voz alta
+          <p
+            className={`text-[10px] uppercase tracking-wider ${styleAtiva.accent}`}
+          >
+            {BLOCOS[perguntaAtiva.bloco].emoji}{" "}
+            {BLOCOS[perguntaAtiva.bloco].label} · Pergunta SPIN — leia em voz
+            alta
           </p>
-          <span className="text-[10px] text-amber-300/60">
-            Alavanca: {perguntaAtiva.alavancas.join(", ")}
-          </span>
+          <span className="text-[10px] text-slate-500">P{perguntaAtiva.id}</span>
         </div>
         <p className="text-lg text-slate-100 leading-relaxed font-medium italic">
           &ldquo;{perguntaAtiva.perguntaSpin}&rdquo;
         </p>
       </div>
 
-      {/* 3 botões de registro (escala de dor) */}
+      {/* 3 botões de severidade */}
       <div>
-        <p className="text-xs text-slate-500 mb-2">
-          Registre o que ele disse — qual o grau da dor:
-        </p>
+        <p className="text-xs text-slate-500 mb-2">Registre o que ele disse:</p>
         <div className="grid grid-cols-3 gap-2">
           <button
             onClick={() => marcar(false, 1)}
             className={`px-4 py-3 rounded-lg border font-medium text-sm transition-all ${
-              respostasMap[perguntaAtivaId] === false && severidadeMap[perguntaAtivaId] === 1
+              respostasMap[perguntaAtivaId] === false &&
+              severidadeMap[perguntaAtivaId] === 1
                 ? "bg-red-600 border-red-500 text-white ring-2 ring-red-400"
                 : "bg-red-900/40 hover:bg-red-900/60 border-red-800/60 text-red-100"
             }`}
@@ -148,7 +236,8 @@ export function ProblemaFase({ sessao, onConcluir, onRefresh }: Props) {
           <button
             onClick={() => marcar(false, 2)}
             className={`px-4 py-3 rounded-lg border font-medium text-sm transition-all ${
-              respostasMap[perguntaAtivaId] === false && severidadeMap[perguntaAtivaId] === 2
+              respostasMap[perguntaAtivaId] === false &&
+              severidadeMap[perguntaAtivaId] === 2
                 ? "bg-amber-600 border-amber-500 text-white ring-2 ring-amber-400"
                 : "bg-amber-900/30 hover:bg-amber-900/50 border-amber-800/60 text-amber-100"
             }`}
@@ -176,7 +265,7 @@ export function ProblemaFase({ sessao, onConcluir, onRefresh }: Props) {
         </div>
       </div>
 
-      {/* Aprofundamento após confirmar problema */}
+      {/* Aprofundamento */}
       {mostrarAprofundamento && respostasMap[perguntaAtivaId] === false && (
         <div className="p-4 rounded-xl bg-orange-900/20 border border-orange-800/40 space-y-3">
           <div>
@@ -213,7 +302,6 @@ export function ProblemaFase({ sessao, onConcluir, onRefresh }: Props) {
             </div>
           </div>
 
-          {/* Frases já capturadas para esta pergunta */}
           {frasesDestaPergunta.length > 0 && (
             <div className="space-y-1 pt-2 border-t border-orange-800/30">
               {frasesDestaPergunta.map((f) => (
@@ -239,59 +327,70 @@ export function ProblemaFase({ sessao, onConcluir, onRefresh }: Props) {
         </div>
       )}
 
-      {/* Mapa das 10 perguntas */}
-      <div className="p-4 rounded-xl bg-slate-900/40 border border-slate-800">
-        <p className="text-[10px] uppercase tracking-wider text-slate-500 mb-3">
-          Roteiro ({totalRespondidas}/10 respondidas · {problemasConfirmados} problemas)
-        </p>
-        <div className="grid grid-cols-5 gap-1.5">
-          {perguntasOrdenadas.map((p) => {
-            const resp = respostasMap[p.id];
-            const sev = severidadeMap[p.id];
-            const isActive = perguntaAtivaId === p.id;
-            const semFrase = resp === false && !problemaTemFrase(p.id);
-            return (
-              <button
-                key={p.id}
-                onClick={() => {
-                  setPerguntaAtivaId(p.id);
-                  setMostrarAprofundamento(resp === false);
-                }}
-                className={`px-2 py-1.5 rounded text-xs font-medium transition relative ${
-                  isActive
-                    ? "bg-amber-600 text-white"
-                    : resp === false && sev === 1
-                    ? "bg-red-900/50 text-red-300 border border-red-800/50"
-                    : resp === false && sev === 2
-                    ? "bg-amber-900/40 text-amber-300 border border-amber-800/40"
-                    : resp === true
-                    ? "bg-emerald-900/20 text-emerald-400"
-                    : "bg-slate-800 text-slate-500"
-                }`}
-                title={p.texto}
+      {/* Mapa das 10 perguntas agrupadas por bloco */}
+      <div className="space-y-2">
+        {BLOCO_ORDEM.map((alav) => {
+          const ids = PERGUNTAS.filter((p) => p.bloco === alav).map((p) => p.id);
+          const meta = BLOCOS[alav];
+          const style = BLOCO_STYLE[alav];
+          return (
+            <div
+              key={alav}
+              className={`p-3 rounded-lg border ${style.bg} ${style.border}`}
+            >
+              <p
+                className={`text-[10px] uppercase tracking-wider ${style.accent} mb-2`}
               >
-                P{p.id}
-                {semFrase && !isActive && (
-                  <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-red-500" />
-                )}
-              </button>
-            );
-          })}
-        </div>
-        {problemasSemFrase.length > 0 && (
-          <p className="text-[10px] text-red-400 mt-2">
-            ⚠ P{problemasSemFrase.join(", P")} — problema confirmado sem frase
-            capturada. Clique para adicionar.
-          </p>
-        )}
+                {meta.emoji} {meta.label}
+              </p>
+              <div className="grid grid-cols-4 gap-1.5">
+                {ids.map((id) => {
+                  const p = PERGUNTAS.find((pp) => pp.id === id)!;
+                  const resp = respostasMap[id];
+                  const sev = severidadeMap[id];
+                  const isActive = perguntaAtivaId === id;
+                  const semFrase = resp === false && !problemaTemFrase(id);
+                  return (
+                    <button
+                      key={id}
+                      onClick={() => {
+                        setPerguntaAtivaId(id);
+                        setMostrarAprofundamento(resp === false);
+                      }}
+                      className={`px-2 py-1.5 rounded text-xs font-medium transition relative ${
+                        isActive
+                          ? "bg-slate-100 text-slate-900"
+                          : resp === false && sev === 1
+                          ? "bg-red-900/50 text-red-300 border border-red-800/50"
+                          : resp === false && sev === 2
+                          ? "bg-amber-900/40 text-amber-300 border border-amber-800/40"
+                          : resp === true
+                          ? "bg-emerald-900/20 text-emerald-400"
+                          : "bg-slate-800 text-slate-500"
+                      }`}
+                      title={p.texto}
+                    >
+                      P{id}
+                      {semFrase && !isActive && (
+                        <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-red-500" />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       <div className="flex items-center justify-between">
         <p className="text-xs text-slate-500">
-          {problemasConfirmados < 3
-            ? `Mapeie pelo menos 3 problemas (${problemasConfirmados}/3).`
+          {totalProblemas < 3
+            ? `Mapeie pelo menos 3 problemas (${totalProblemas}/3).`
             : !todosProblemasTemFrase
             ? "Capture frases para todos os problemas confirmados antes de avançar."
+            : alavancaDominante
+            ? `Alavanca dominante: ${BLOCOS[alavancaDominante].label}. Pode amplificar.`
             : "Mapeamento completo. Pode amplificar na Implicação."}
         </p>
         <button

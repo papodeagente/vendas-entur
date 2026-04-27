@@ -36,18 +36,42 @@ export function AberturaFase({ sessao, onConcluir, onRefresh }: Props) {
 
   return (
     <div className="space-y-6 max-w-3xl">
-      {/* Script de abertura */}
+      {/* Script de abertura — Antigravity contract */}
       <div className="p-5 rounded-xl bg-slate-900/60 border border-slate-800">
         <p className="text-[10px] uppercase tracking-wider text-emerald-400 mb-3">
-          Leia em voz alta (contrato da reunião)
+          Leia em voz alta — contrato da reunião
         </p>
         <p className="text-slate-100 leading-relaxed italic">
-          &ldquo;Obrigado por reservar esses 40 minutos. A ideia é simples: vou fazer algumas
-          perguntas para entender como funciona sua operação comercial hoje. Depois a gente
-          olha juntos para os números — quanto você está deixando na mesa todo mês em venda,
-          recompra e indicação. E se fizer sentido, te mostro como a gente resolve isso.
-          Posso começar?&rdquo;
+          &ldquo;Obrigado por reservar esses 40 minutos. A ideia é simples: vou
+          fazer algumas perguntas pra entender como funciona sua operação
+          comercial hoje. Depois{" "}
+          <span className="text-emerald-300 not-italic font-medium">
+            vou te mostrar quanto dinheiro está passando pela sua mão todo mês —
+            em venda perdida, recompra que não acontece e indicação que não
+            chega — sem você capturar
+          </span>
+          . E no final{" "}
+          <span className="text-emerald-300 not-italic font-medium">
+            a gente decide juntos o próximo passo
+          </span>
+          . Posso começar?&rdquo;
         </p>
+        <div className="mt-4 pt-3 border-t border-slate-800/60 grid grid-cols-3 gap-3 text-[11px]">
+          <div className="text-slate-400">
+            <span className="block text-emerald-400 font-semibold">
+              ✗ Não diga
+            </span>
+            &ldquo;se fizer sentido, eu te mostro&rdquo;
+          </div>
+          <div className="text-slate-400">
+            <span className="block text-emerald-400 font-semibold">✗ Não pitche</span>
+            Apenas peça permissão pra perguntar.
+          </div>
+          <div className="text-slate-400">
+            <span className="block text-emerald-400 font-semibold">✓ Faça</span>
+            Use o nome dele durante toda a sessão.
+          </div>
+        </div>
       </div>
 
       {/* Captura do prospect */}
@@ -55,7 +79,8 @@ export function AberturaFase({ sessao, onConcluir, onRefresh }: Props) {
         <div>
           <h3 className="font-semibold mb-1">Com quem estamos falando?</h3>
           <p className="text-xs text-slate-500">
-            Capture o nome e o cargo. Use durante a conversa — pessoas gostam de ser chamadas pelo nome.
+            Capture o nome e o cargo. Use durante a conversa — pessoas gostam
+            de ser chamadas pelo nome.
           </p>
         </div>
         <div className="grid grid-cols-2 gap-3">
