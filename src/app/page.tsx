@@ -44,7 +44,7 @@ export default function HomePage() {
       body: JSON.stringify({ agenciaNome: agencia }),
     });
     const sessao = await res.json();
-    router.push(`/sessao/${sessao.id}`);
+    router.push(`/sessao/${sessao.id}/ao-vivo`);
   }
 
   return (
@@ -64,7 +64,7 @@ export default function HomePage() {
 
         <Card className="mb-8 bg-slate-800/50 border-slate-700">
           <CardHeader>
-            <CardTitle className="text-white">Nova Sessão</CardTitle>
+            <CardTitle className="text-white">Nova Sessão SPIN Ao Vivo</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={criarSessao} className="flex gap-4 items-end">
@@ -82,7 +82,7 @@ export default function HomePage() {
                 disabled={criando || !agencia}
                 className="bg-emerald-600 hover:bg-emerald-700 text-white"
               >
-                {criando ? "Criando..." : "Iniciar Sessão"}
+                {criando ? "Criando..." : "Iniciar SPIN Ao Vivo"}
               </Button>
             </form>
           </CardContent>
@@ -98,7 +98,7 @@ export default function HomePage() {
                 <Card
                   key={s.id}
                   className="bg-slate-800/50 border-slate-700 hover:border-emerald-600/50 cursor-pointer transition-colors"
-                  onClick={() => router.push(`/sessao/${s.id}`)}
+                  onClick={() => router.push(`/sessao/${s.id}/ao-vivo`)}
                 >
                   <CardContent className="flex items-center justify-between py-4">
                     <div>

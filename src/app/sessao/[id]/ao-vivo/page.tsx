@@ -133,11 +133,8 @@ export default function SessaoAoVivoPage({
             </a>
             <div className="h-5 w-px bg-slate-800" />
             <div>
-              <a
-                href={`/sessao/${id}`}
-                className="text-[10px] text-slate-500 hover:text-slate-300 transition-colors"
-              >
-                ← formulário
+              <a href="/" className="text-[10px] text-slate-500 hover:text-slate-300 transition-colors">
+                ← sessões
               </a>
               <h1 className="text-sm font-semibold">
                 {sessao.agenciaNome}
