@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { SESSION_COOKIE, verificarSessao } from "@/lib/auth";
+import { MODELO_INTERNO_ENTUR } from "@/lib/modelosSpin";
 
 export const dynamic = "force-dynamic";
 
@@ -32,7 +33,10 @@ export async function GET(
     },
   });
   if (!sessao) return NextResponse.json({ error: "Não encontrada" }, { status: 404 });
-  if (s.role !== "admin" && sessao.userId !== s.userId) {
+  if (
+    s.role !== "admin" &&
+    (sessao.userId !== s.userId || sessao.modeloSpin === MODELO_INTERNO_ENTUR)
+  ) {
     return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
   }
   return NextResponse.json(sessao);
@@ -49,7 +53,10 @@ export async function DELETE(
   }
   const sessao = await prisma.sessao.findUnique({ where: { id: Number(id) } });
   if (!sessao) return NextResponse.json({ error: "Não encontrada" }, { status: 404 });
-  if (s.role !== "admin" && sessao.userId !== s.userId) {
+  if (
+    s.role !== "admin" &&
+    (sessao.userId !== s.userId || sessao.modeloSpin === MODELO_INTERNO_ENTUR)
+  ) {
     return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
   }
   await prisma.sessao.delete({ where: { id: Number(id) } });

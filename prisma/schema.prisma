@@ -25,6 +25,7 @@ model User {
 model Sessao {
   id            Int       @id @default(autoincrement())
   userId        Int?      @map("user_id")
+  modeloSpin    String    @default("entur_crm_interno") @map("modelo_spin") // entur_crm_interno | agencia_buenos_aires
   agenciaNome   String    @map("agencia_nome")
   vendedorNome  String    @map("vendedor_nome")
   status        String    @default("rascunho") // rascunho | completa

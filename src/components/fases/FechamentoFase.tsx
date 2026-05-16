@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { dinheiroNaMesa, TAXAS_REFERENCIA } from "@/lib/calculo";
-import { PERGUNTAS, BLOCOS, type Alavanca } from "@/lib/perguntas";
+import { PERGUNTAS, type Alavanca } from "@/lib/perguntas";
 import type { SessaoAoVivo } from "@/app/sessao/[id]/ao-vivo/page";
 
 interface Props {

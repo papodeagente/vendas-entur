@@ -27,7 +27,15 @@ export default function AdminUsersPage() {
   }
 
   useEffect(() => {
-    carregar();
+    let ativo = true;
+    fetch("/api/admin/users")
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data) => {
+        if (ativo) setUsers(data);
+      });
+    return () => {
+      ativo = false;
+    };
   }, []);
 
   async function criar(e: React.FormEvent) {

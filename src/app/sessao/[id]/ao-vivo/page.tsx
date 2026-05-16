@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, use } from "react";
+import Link from "next/link";
 import { FASES, FASES_MAP, FaseKey } from "@/lib/fases";
 import { AberturaFase } from "@/components/fases/AberturaFase";
 import { SituacaoFase } from "@/components/fases/SituacaoFase";
@@ -11,9 +12,12 @@ import { FechamentoFase } from "@/components/fases/FechamentoFase";
 import { PainelCoach } from "@/components/coach/PainelCoach";
 import { DinheiroAcumulado } from "@/components/coach/DinheiroAcumulado";
 import { EnturLogo } from "@/components/EnturLogo";
+import { AgenciaBuenosAiresAoVivo } from "@/components/playbooks/AgenciaBuenosAiresAoVivo";
+import { MODELO_AGENCIA_BUENOS_AIRES } from "@/lib/modelosSpin";
 
 export interface SessaoAoVivo {
   id: number;
+  modeloSpin: string;
   agenciaNome: string;
   vendedorNome: string;
   status: string;
@@ -68,12 +72,23 @@ export default function SessaoAoVivoPage({
   }, [id]);
 
   useEffect(() => {
-    carregarSessao();
-  }, [carregarSessao]);
+    let ativo = true;
+    fetch(`/api/sessoes/${id}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (!ativo) return;
+        setSessao(data);
+        setLoading(false);
+      });
+    return () => {
+      ativo = false;
+    };
+  }, [id]);
 
   // Marca fase como iniciada quando o vendedor muda para ela
   useEffect(() => {
     if (!sessao) return;
+    if (sessao.modeloSpin === MODELO_AGENCIA_BUENOS_AIRES) return;
     fetch(`/api/sessoes/${id}/progresso`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -122,20 +137,29 @@ export default function SessaoAoVivoPage({
 
   const faseAtivaMeta = FASES_MAP[faseAtiva];
 
+  if (sessao.modeloSpin === MODELO_AGENCIA_BUENOS_AIRES) {
+    return (
+      <AgenciaBuenosAiresAoVivo
+        sessao={sessao}
+        onRefresh={carregarSessao}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-slate-100">
       {/* Header */}
       <header className="border-b border-slate-800/80 bg-slate-900/90 backdrop-blur-sm px-6 py-3">
         <div className="flex items-center justify-between max-w-[1600px] mx-auto">
           <div className="flex items-center gap-5">
-            <a href="/" className="flex items-center">
+            <Link href="/" className="flex items-center">
               <EnturLogo size="sm" />
-            </a>
+            </Link>
             <div className="h-5 w-px bg-slate-800" />
             <div>
-              <a href="/" className="text-[10px] text-slate-500 hover:text-slate-300 transition-colors">
+              <Link href="/" className="text-[10px] text-slate-500 hover:text-slate-300 transition-colors">
                 ← sessões
-              </a>
+              </Link>
               <h1 className="text-sm font-semibold">
                 {sessao.agenciaNome}
                 <span className="text-slate-500 font-normal ml-2">

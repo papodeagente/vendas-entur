@@ -14,10 +14,11 @@ export function PainelCoach({ faseAtiva, sessao, respostas }: Props) {
   const meta = FASES_MAP[faseAtiva];
   const [segundos, setSegundos] = useState(0);
 
-  // Reset cronômetro ao mudar de fase
   useEffect(() => {
-    setSegundos(0);
-    const t = setInterval(() => setSegundos((s) => s + 1), 1000);
+    const inicio = Date.now();
+    const t = setInterval(() => {
+      setSegundos(Math.floor((Date.now() - inicio) / 1000));
+    }, 1000);
     return () => clearInterval(t);
   }, [faseAtiva]);
 
