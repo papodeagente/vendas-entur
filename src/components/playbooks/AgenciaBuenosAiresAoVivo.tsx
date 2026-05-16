@@ -11,17 +11,18 @@ import {
   AGENCIA_FASES,
   AGENCIA_FASES_MAP,
   AgenciaFaseKey,
-  frasesAltoNivelAgencia,
-  microCompromissosAgencia,
-  perdasMontarSozinho,
-  perguntasImplicacaoAgencia,
-  perguntasNeedPayoffAgencia,
-  perguntasProblemaAgencia,
-  perguntasSituacaoAgencia,
-  perguntasWhatsApp,
-  pilaresCuradoria,
-  roteiroPropostaAgencia,
+  frasesAltoNivelAgencia as _frasesDefault,
+  microCompromissosAgencia as _microDefault,
+  perdasMontarSozinho as _perdasDefault,
+  perguntasImplicacaoAgencia as _implicDefault,
+  perguntasNeedPayoffAgencia as _payoffDefault,
+  perguntasProblemaAgencia as _problemaDefault,
+  perguntasSituacaoAgencia as _situacaoDefault,
+  perguntasWhatsApp as _whatsappDefault,
+  pilaresCuradoria as _pilaresDefault,
+  roteiroPropostaAgencia as _roteiroDefault,
 } from "@/lib/playbooks/agenciaBuenosAires";
+import type { SpinGerado } from "@/lib/spinGerador";
 import {
   Check,
   ChevronRight,
@@ -45,6 +46,33 @@ function primeiraFasePendente(sessao: SessaoAoVivo): AgenciaFaseKey {
 }
 
 export function AgenciaBuenosAiresAoVivo({ sessao, onRefresh }: Props) {
+  // Se a sessão tem SPIN gerado por IA (perguntasJson), usa ele.
+  // Senão, cai no playbook hardcoded de Buenos Aires.
+  const spinCustom = useMemo<SpinGerado | null>(() => {
+    if (!sessao.perguntasJson) return null;
+    try {
+      return JSON.parse(sessao.perguntasJson) as SpinGerado;
+    } catch {
+      return null;
+    }
+  }, [sessao.perguntasJson]);
+
+  const pilaresCuradoria = spinCustom?.pilares ?? _pilaresDefault;
+  const perdasMontarSozinho = spinCustom?.perdasMontarSozinho ?? _perdasDefault;
+  const perguntasWhatsApp = spinCustom?.perguntasWhatsApp ?? _whatsappDefault;
+  const perguntasSituacaoAgencia =
+    spinCustom?.perguntasSituacao ?? _situacaoDefault;
+  const perguntasProblemaAgencia =
+    spinCustom?.perguntasProblema ?? _problemaDefault;
+  const perguntasImplicacaoAgencia =
+    spinCustom?.perguntasImplicacao ?? _implicDefault;
+  const perguntasNeedPayoffAgencia =
+    spinCustom?.perguntasNeedPayoff ?? _payoffDefault;
+  const roteiroPropostaAgencia = spinCustom?.roteiroProposta ?? _roteiroDefault;
+  const microCompromissosAgencia =
+    spinCustom?.microCompromissos ?? _microDefault;
+  const frasesAltoNivelAgencia = spinCustom?.frasesAltoNivel ?? _frasesDefault;
+
   const [faseAtiva, setFaseAtiva] = useState<AgenciaFaseKey>(() =>
     primeiraFasePendente(sessao)
   );
@@ -123,16 +151,28 @@ export function AgenciaBuenosAiresAoVivo({ sessao, onRefresh }: Props) {
                 ← sessões
               </Link>
               <h1 className="text-sm font-semibold">
-                {sessao.agenciaNome}
+                {sessao.pacote?.nome || sessao.agenciaNome}
                 <span className="text-slate-500 font-normal ml-2">
                   · {sessao.vendedorNome}
                 </span>
               </h1>
+              {sessao.pacote && (
+                <p className="text-[10px] text-slate-500 mt-0.5">
+                  Destino: {sessao.pacote.destino}
+                </p>
+              )}
             </div>
           </div>
-          <Badge className="bg-sky-900/60 text-sky-100 border border-sky-700/50">
-            SPIN Agência · Experiência Curada
-          </Badge>
+          <div className="flex items-center gap-2">
+            {spinCustom && (
+              <Badge className="bg-purple-900/60 text-purple-100 border border-purple-700/50">
+                ✨ SPIN IA personalizado
+              </Badge>
+            )}
+            <Badge className="bg-sky-900/60 text-sky-100 border border-sky-700/50">
+              SPIN Agência · Experiência Curada
+            </Badge>
+          </div>
         </div>
       </header>
 
@@ -437,7 +477,11 @@ export function AgenciaBuenosAiresAoVivo({ sessao, onRefresh }: Props) {
 
         <aside className="w-80 shrink-0 border-l border-slate-800 px-5 py-6 sticky top-0 h-screen overflow-y-auto">
           <div className="space-y-5">
-            <PainelCoachAgencia frases={frasesCapturadas} />
+            <PainelCoachAgencia
+              frases={frasesCapturadas}
+              pilares={pilaresCuradoria}
+              frasesAltoNivel={frasesAltoNivelAgencia}
+            />
           </div>
         </aside>
       </div>
@@ -628,9 +672,15 @@ function FraseInline({ frases }: { frases: SessaoAoVivo["frases"] }) {
 
 function PainelCoachAgencia({
   frases,
+  pilares,
+  frasesAltoNivel,
 }: {
   frases: SessaoAoVivo["frases"];
+  pilares: { titulo: string; texto: string }[];
+  frasesAltoNivel: string[];
 }) {
+  const pilaresCuradoria = pilares;
+  const frasesAltoNivelAgencia = frasesAltoNivel;
   return (
     <>
       <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4">

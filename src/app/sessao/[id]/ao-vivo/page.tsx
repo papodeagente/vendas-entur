@@ -28,6 +28,15 @@ export interface SessaoAoVivo {
   valorMesaAno: number | null;
   followUpEm: string | null;
   observacaoFechamento: string | null;
+  perguntasJson: string | null;
+  pacoteId: number | null;
+  pacote: {
+    id: number;
+    nome: string;
+    destino: string;
+    valorTotal: number;
+    moeda: string;
+  } | null;
   respostas: { perguntaId: number; resposta: boolean; severidade: number | null }[];
   dados: {
     vendasMes: number;

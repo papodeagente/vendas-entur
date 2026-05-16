@@ -45,6 +45,12 @@ export function Navbar() {
           >
             Sessões
           </Link>
+          <Link
+            href="/pacotes"
+            className="text-slate-400 hover:text-white text-sm transition-colors"
+          >
+            Pacotes
+          </Link>
           {me.role === "admin" && (
             <>
               <Link
@@ -58,6 +64,12 @@ export function Navbar() {
                 className="text-slate-400 hover:text-white text-sm transition-colors"
               >
                 Usuários
+              </Link>
+              <Link
+                href="/admin/integracoes"
+                className="text-purple-400 hover:text-purple-300 text-sm transition-colors"
+              >
+                ✨ Integrações IA
               </Link>
             </>
           )}

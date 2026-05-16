@@ -178,6 +178,17 @@ export default function HomePage() {
                 </Button>
               </div>
               {erro && <p className="text-sm text-red-400">{erro}</p>}
+
+              {modeloSpin === MODELO_AGENCIA_BUENOS_AIRES && (
+                <div className="mt-2 p-3 rounded-lg bg-purple-900/20 border border-purple-700/40 text-xs text-slate-300">
+                  <span className="text-purple-300 font-semibold">✨ Dica:</span>{" "}
+                  Para um SPIN personalizado pelo pacote (destino, valor, persona), cadastre o pacote em{" "}
+                  <a href="/pacotes" className="underline hover:text-purple-200">
+                    /pacotes
+                  </a>{" "}
+                  e inicie o atendimento direto de lá. A IA gera as perguntas SPIN específicas para aquele pacote.
+                </div>
+              )}
             </form>
           </CardContent>
         </Card>

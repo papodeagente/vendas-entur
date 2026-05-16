@@ -60,6 +60,9 @@ export async function POST(req: Request) {
       modeloSpin,
       agenciaNome,
       vendedorNome: s.nome,
+      pacoteId: body.pacoteId ? Number(body.pacoteId) : null,
+      perguntasJson:
+        typeof body.perguntasJson === "string" ? body.perguntasJson : null,
     },
   });
   return NextResponse.json(sessao, { status: 201 });

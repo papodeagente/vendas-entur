@@ -18,8 +18,42 @@ model User {
   updatedAt    DateTime @updatedAt @map("updated_at")
 
   sessoes      Sessao[]
+  pacotes      Pacote[]
 
   @@map("users")
+}
+
+model Configuracao {
+  id        Int      @id @default(autoincrement())
+  chave     String   @unique // openai_api_key | anthropic_api_key | ai_provider_padrao | modelo_openai | modelo_anthropic
+  valor     String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("configuracoes")
+}
+
+model Pacote {
+  id              Int      @id @default(autoincrement())
+  nome            String   // ex: "Cancun 7 dias All Inclusive"
+  destino         String   // ex: "Cancun, México"
+  tipo            String   // praia | aventura | cultural | romance | familia | luxo | outro
+  duracaoDias     Int      @map("duracao_dias")
+  valorTotal      Float    @map("valor_total")
+  moeda           String   @default("BRL")
+  personaAlvo     String   @map("persona_alvo") // ex: "casal sem filhos, 30-45 anos"
+  descricao       String   @db.Text // hotel, atividades, refeições, diferenciais
+  diferenciais    String?  @db.Text // o que torna esse pacote especial
+  objecoesComuns  String?  @db.Text @map("objecoes_comuns") // o que clientes costumam objetar
+  observacoes     String?  @db.Text // notas livres do vendedor
+  createdById     Int      @map("created_by_id")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  createdBy       User     @relation(fields: [createdById], references: [id])
+  sessoes         Sessao[]
+
+  @@map("pacotes")
 }
 
 model Sessao {
@@ -36,10 +70,13 @@ model Sessao {
   valorMesaAno  Float?    @map("valor_mesa_ano")
   followUpEm    DateTime? @map("follow_up_em")
   observacaoFechamento String? @map("observacao_fechamento")
+  pacoteId      Int?      @map("pacote_id")
+  perguntasJson String?   @db.Text @map("perguntas_json") // SPIN gerado por IA (JSON)
   createdAt     DateTime  @default(now()) @map("created_at")
   updatedAt     DateTime  @updatedAt @map("updated_at")
 
   usuario       User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  pacote        Pacote?   @relation(fields: [pacoteId], references: [id], onDelete: SetNull)
   respostas     RespostaDiagnostico[]
   dados         DadosAgencia?
   planoAcoes    PlanoAcao[]

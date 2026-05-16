@@ -30,6 +30,15 @@ export async function GET(
       frases: true,
       progresso: true,
       usuario: { select: { id: true, nome: true, email: true } },
+      pacote: {
+        select: {
+          id: true,
+          nome: true,
+          destino: true,
+          valorTotal: true,
+          moeda: true,
+        },
+      },
     },
   });
   if (!sessao) return NextResponse.json({ error: "Não encontrada" }, { status: 404 });
