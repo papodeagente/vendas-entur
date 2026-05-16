@@ -19,6 +19,15 @@ function brl(n: number) {
 }
 
 type CTA = "demo" | "proposta" | "piloto";
+type ComercialStatus =
+  | "nova"
+  | "diagnostico"
+  | "demo"
+  | "proposta"
+  | "piloto"
+  | "negociacao"
+  | "ganho"
+  | "perdido";
 
 const CTAS: { key: CTA; titulo: string; descricao: string; script: string }[] = [
   {
@@ -70,11 +79,25 @@ export function FechamentoFase({ sessao, onRefresh }: Props) {
   sessao.respostas.forEach((r) => (respostasMap[r.perguntaId] = r.resposta));
   const r = sessao.dados ? dinheiroNaMesa(respostasMap, sessao.dados) : null;
 
-  const [ctaSelecionado, setCtaSelecionado] = useState<CTA | null>(null);
-  const [precoCrm, setPrecoCrm] = useState(TAXAS_REFERENCIA.precoCrmDefault);
+  const [ctaSelecionado, setCtaSelecionado] = useState<CTA | null>(
+    (sessao.ctaEscolhido as CTA | null) || null
+  );
+  const [comercialStatus, setComercialStatus] = useState<ComercialStatus>(
+    (sessao.comercialStatus as ComercialStatus) || "nova"
+  );
+  const [precoCrm, setPrecoCrm] = useState(
+    sessao.precoCrmMes || TAXAS_REFERENCIA.precoCrmDefault
+  );
   const [email, setEmail] = useState(sessao.prospect?.email || "");
   const [whatsapp, setWhatsapp] = useState(sessao.prospect?.whatsapp || "");
   const [salvando, setSalvando] = useState(false);
+  const [salvandoDesfecho, setSalvandoDesfecho] = useState(false);
+  const [followUpEm, setFollowUpEm] = useState(
+    sessao.followUpEm ? sessao.followUpEm.slice(0, 16) : ""
+  );
+  const [observacaoFechamento, setObservacaoFechamento] = useState(
+    sessao.observacaoFechamento || ""
+  );
   const [objAberta, setObjAberta] = useState<string | null>(null);
 
   async function salvarContato() {
@@ -91,6 +114,25 @@ export function FechamentoFase({ sessao, onRefresh }: Props) {
       }),
     });
     setSalvando(false);
+    onRefresh();
+  }
+
+  async function salvarDesfecho() {
+    setSalvandoDesfecho(true);
+    await fetch(`/api/sessoes/${sessao.id}/comercial`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        comercialStatus,
+        ctaEscolhido: ctaSelecionado,
+        precoCrmMes: precoCrm,
+        valorMesaMes: recomputado?.totalMes || null,
+        valorMesaAno: recomputado?.totalAno || null,
+        followUpEm: followUpEm ? new Date(followUpEm).toISOString() : null,
+        observacaoFechamento,
+      }),
+    });
+    setSalvandoDesfecho(false);
     onRefresh();
   }
 
@@ -319,7 +361,10 @@ export function FechamentoFase({ sessao, onRefresh }: Props) {
           {CTAS.map((c) => (
             <button
               key={c.key}
-              onClick={() => setCtaSelecionado(c.key)}
+              onClick={() => {
+                setCtaSelecionado(c.key);
+                setComercialStatus(c.key);
+              }}
               className={`text-left p-4 rounded-xl border transition-all ${
                 ctaSelecionado === c.key
                   ? "bg-indigo-600/20 border-indigo-500"
@@ -343,6 +388,82 @@ export function FechamentoFase({ sessao, onRefresh }: Props) {
           </p>
         </div>
       )}
+
+      {/* Desfecho comercial */}
+      <div className="p-5 rounded-xl bg-slate-900/50 border border-slate-800 space-y-4">
+        <div>
+          <p className="text-[10px] uppercase tracking-wider text-purple-300 mb-1">
+            Registro comercial — obrigatório para gestão
+          </p>
+          <p className="text-xs text-slate-500">
+            Salve o próximo passo real da conversa. Isso alimenta o dashboard do gestor.
+          </p>
+        </div>
+
+        <div className="grid md:grid-cols-3 gap-3">
+          <div>
+            <label className="text-[11px] text-slate-400 block mb-1">
+              Status comercial
+            </label>
+            <select
+              value={comercialStatus}
+              onChange={(e) => setComercialStatus(e.target.value as ComercialStatus)}
+              className="w-full px-3 py-2 rounded bg-slate-800 border border-slate-700 text-sm text-slate-100 focus:outline-none focus:border-purple-500"
+            >
+              <option value="nova">Nova</option>
+              <option value="diagnostico">Diagnóstico feito</option>
+              <option value="demo">Demo marcada</option>
+              <option value="proposta">Proposta solicitada</option>
+              <option value="piloto">Piloto sugerido</option>
+              <option value="negociacao">Negociação</option>
+              <option value="ganho">Fechado ganho</option>
+              <option value="perdido">Fechado perdido</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="text-[11px] text-slate-400 block mb-1">
+              Follow-up
+            </label>
+            <input
+              type="datetime-local"
+              value={followUpEm}
+              onChange={(e) => setFollowUpEm(e.target.value)}
+              className="w-full px-3 py-2 rounded bg-slate-800 border border-slate-700 text-sm text-slate-100 focus:outline-none focus:border-purple-500"
+            />
+          </div>
+
+          <div>
+            <label className="text-[11px] text-slate-400 block mb-1">
+              Valor na mesa salvo
+            </label>
+            <div className="px-3 py-2 rounded bg-slate-950/70 border border-slate-800 text-sm text-emerald-300 font-semibold">
+              {brl(recomputado?.totalMes || 0)}/mês
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <label className="text-[11px] text-slate-400 block mb-1">
+            Observação de fechamento
+          </label>
+          <textarea
+            value={observacaoFechamento}
+            onChange={(e) => setObservacaoFechamento(e.target.value)}
+            rows={3}
+            placeholder="Ex: quer envolver sócio financeiro; pediu proposta até amanhã; objeção principal foi implementação do time."
+            className="w-full px-3 py-2 rounded bg-slate-800 border border-slate-700 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-purple-500"
+          />
+        </div>
+
+        <button
+          onClick={salvarDesfecho}
+          disabled={salvandoDesfecho || !ctaSelecionado}
+          className="px-4 py-2 rounded bg-purple-600 hover:bg-purple-500 text-sm font-semibold disabled:opacity-40"
+        >
+          {salvandoDesfecho ? "Salvando..." : "Salvar desfecho comercial"}
+        </button>
+      </div>
 
       {/* Anti-objeções */}
       <div className="p-4 rounded-xl bg-slate-900/40 border border-slate-800">

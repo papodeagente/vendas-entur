@@ -46,12 +46,20 @@ export function Navbar() {
             Sessões
           </Link>
           {me.role === "admin" && (
-            <Link
-              href="/admin/users"
-              className="text-slate-400 hover:text-white text-sm transition-colors"
-            >
-              Usuários
-            </Link>
+            <>
+              <Link
+                href="/admin/dashboard"
+                className="text-slate-400 hover:text-white text-sm transition-colors"
+              >
+                Dashboard
+              </Link>
+              <Link
+                href="/admin/users"
+                className="text-slate-400 hover:text-white text-sm transition-colors"
+              >
+                Usuários
+              </Link>
+            </>
           )}
         </div>
         <div className="flex items-center gap-4">

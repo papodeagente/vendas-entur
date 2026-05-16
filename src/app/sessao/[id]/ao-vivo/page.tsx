@@ -17,6 +17,13 @@ export interface SessaoAoVivo {
   agenciaNome: string;
   vendedorNome: string;
   status: string;
+  comercialStatus: string;
+  ctaEscolhido: string | null;
+  precoCrmMes: number | null;
+  valorMesaMes: number | null;
+  valorMesaAno: number | null;
+  followUpEm: string | null;
+  observacaoFechamento: string | null;
   respostas: { perguntaId: number; resposta: boolean; severidade: number | null }[];
   dados: {
     vendasMes: number;

@@ -17,17 +17,28 @@ model User {
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
+  sessoes      Sessao[]
+
   @@map("users")
 }
 
 model Sessao {
   id            Int       @id @default(autoincrement())
+  userId        Int?      @map("user_id")
   agenciaNome   String    @map("agencia_nome")
   vendedorNome  String    @map("vendedor_nome")
   status        String    @default("rascunho") // rascunho | completa
+  comercialStatus String  @default("nova") @map("comercial_status") // nova | diagnostico | demo | proposta | piloto | negociacao | ganho | perdido
+  ctaEscolhido  String?   @map("cta_escolhido") // demo | proposta | piloto
+  precoCrmMes   Float?    @map("preco_crm_mes")
+  valorMesaMes  Float?    @map("valor_mesa_mes")
+  valorMesaAno  Float?    @map("valor_mesa_ano")
+  followUpEm    DateTime? @map("follow_up_em")
+  observacaoFechamento String? @map("observacao_fechamento")
   createdAt     DateTime  @default(now()) @map("created_at")
   updatedAt     DateTime  @updatedAt @map("updated_at")
 
+  usuario       User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
   respostas     RespostaDiagnostico[]
   dados         DadosAgencia?
   planoAcoes    PlanoAcao[]

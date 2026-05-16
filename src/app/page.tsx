@@ -14,14 +14,17 @@ interface Sessao {
   id: number;
   agenciaNome: string;
   vendedorNome: string;
+  comercialStatus: string;
+  ctaEscolhido: string | null;
+  valorMesaMes: number | null;
   status: string;
   createdAt: string;
+  usuario?: { id: number; nome: string; email: string } | null;
 }
 
 export default function HomePage() {
   const [sessoes, setSessoes] = useState<Sessao[]>([]);
   const [agencia, setAgencia] = useState("");
-  const [vendedor, setVendedor] = useState("");
   const [criando, setCriando] = useState(false);
   const router = useRouter();
 
@@ -33,12 +36,12 @@ export default function HomePage() {
 
   async function criarSessao(e: React.FormEvent) {
     e.preventDefault();
-    if (!agencia || !vendedor) return;
+    if (!agencia) return;
     setCriando(true);
     const res = await fetch("/api/sessoes", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ agenciaNome: agencia, vendedorNome: vendedor }),
+      body: JSON.stringify({ agenciaNome: agencia }),
     });
     const sessao = await res.json();
     router.push(`/sessao/${sessao.id}`);
@@ -74,18 +77,9 @@ export default function HomePage() {
                   className="bg-slate-700 border-slate-600 text-white"
                 />
               </div>
-              <div className="flex-1">
-                <Label className="text-slate-300">Nome do Vendedor</Label>
-                <Input
-                  value={vendedor}
-                  onChange={(e) => setVendedor(e.target.value)}
-                  placeholder="Ex: Bruno"
-                  className="bg-slate-700 border-slate-600 text-white"
-                />
-              </div>
               <Button
                 type="submit"
-                disabled={criando || !agencia || !vendedor}
+                disabled={criando || !agencia}
                 className="bg-emerald-600 hover:bg-emerald-700 text-white"
               >
                 {criando ? "Criando..." : "Iniciar Sessão"}
@@ -110,20 +104,37 @@ export default function HomePage() {
                     <div>
                       <p className="text-white font-medium">{s.agenciaNome}</p>
                       <p className="text-slate-400 text-sm">
-                        Vendedor: {s.vendedorNome} •{" "}
+                        Vendedor: {s.usuario?.nome || s.vendedorNome} •{" "}
                         {new Date(s.createdAt).toLocaleDateString("pt-BR")}
+                        {s.ctaEscolhido ? ` • CTA: ${s.ctaEscolhido}` : ""}
                       </p>
                     </div>
-                    <Badge
-                      variant={s.status === "completa" ? "default" : "secondary"}
-                      className={
-                        s.status === "completa"
-                          ? "bg-emerald-600"
-                          : "bg-slate-600"
-                      }
-                    >
-                      {s.status === "completa" ? "Completa" : "Rascunho"}
-                    </Badge>
+                    <div className="flex items-center gap-3">
+                      {s.valorMesaMes ? (
+                        <span className="text-sm text-emerald-300 font-semibold">
+                          {s.valorMesaMes.toLocaleString("pt-BR", {
+                            style: "currency",
+                            currency: "BRL",
+                            maximumFractionDigits: 0,
+                          })}
+                          /mês
+                        </span>
+                      ) : null}
+                      <Badge
+                        variant={s.status === "completa" ? "default" : "secondary"}
+                        className={
+                          s.comercialStatus === "ganho"
+                            ? "bg-emerald-600"
+                            : s.comercialStatus === "perdido"
+                            ? "bg-red-700"
+                            : s.status === "completa"
+                            ? "bg-purple-700"
+                            : "bg-slate-600"
+                        }
+                      >
+                        {s.comercialStatus || (s.status === "completa" ? "completa" : "rascunho")}
+                      </Badge>
+                    </div>
                   </CardContent>
                 </Card>
               ))}
